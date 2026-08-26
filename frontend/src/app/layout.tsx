@@ -51,6 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="en"
       data-theme="dark"
+      data-scroll-behavior="smooth"
       className={`${display.variable} ${body.variable} dark h-full antialiased`}
       suppressHydrationWarning
     >
