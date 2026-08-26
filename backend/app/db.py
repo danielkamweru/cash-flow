@@ -33,6 +33,28 @@ def init_db() -> None:
     Base.metadata.create_all(bind=engine)
     with engine.begin() as conn:
         conn.execute(text('ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS "PasswordHash" text'))
+        conn.execute(text('ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS "PinHash" text'))
+        conn.execute(text('ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS "Role" text NOT NULL DEFAULT \'user\''))
+        conn.execute(text('ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS "Phone" text'))
+        conn.execute(text('ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS "Location" text'))
+        conn.execute(text('ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS "CreatedAt" timestamptz'))
+        conn.execute(text('ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS "UpdatedAt" timestamptz'))
+        conn.execute(text('ALTER TABLE "Accounts" ADD COLUMN IF NOT EXISTS "Channel" text'))
+        conn.execute(
+            text(
+                'ALTER TABLE "Accounts" '
+                'ADD COLUMN IF NOT EXISTS "IsEmergencyReserve" boolean NOT NULL DEFAULT false'
+            )
+        )
+        conn.execute(text('ALTER TABLE "Transactions" ADD COLUMN IF NOT EXISTS "Metadata" jsonb'))
+        conn.execute(text('ALTER TABLE "Transactions" ADD COLUMN IF NOT EXISTS "LoopTxnReference" text'))
+        conn.execute(
+            text('ALTER TABLE "Transactions" ADD COLUMN IF NOT EXISTS "Status" text NOT NULL DEFAULT \'completed\'')
+        )
+        conn.execute(text('ALTER TABLE "AutomationRules" ADD COLUMN IF NOT EXISTS "ActionType" text'))
+        conn.execute(text('ALTER TABLE "AutomationRules" ADD COLUMN IF NOT EXISTS "AuthorizedAt" timestamptz'))
+        conn.execute(text('ALTER TABLE "AutomationRules" ADD COLUMN IF NOT EXISTS "ExecutedAt" timestamptz'))
+        conn.execute(text('ALTER TABLE "AutomationRules" ADD COLUMN IF NOT EXISTS "TargetGoalId" text'))
         conn.execute(
             text(
                 'ALTER TABLE "SurplusConfigs" '
