@@ -18,7 +18,7 @@ type ThemeContextValue = {
   toggleTheme: () => void;
 };
 
-const STORAGE_KEY = "wealth-loop-theme";
+const STORAGE_KEY = "cash-flow-theme";
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 

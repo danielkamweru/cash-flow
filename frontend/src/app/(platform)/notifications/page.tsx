@@ -31,14 +31,14 @@ export default function NotificationsPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <PageHeader title="Notifications" subtitle="Analysis alerts and system status — not trading pings." />
-      <ul className="wl-card divide-y divide-wl-border">
+      <ul className="cf-card divide-y divide-wl-border">
         {notes.map((n) => (
           <li key={n.id} className="px-5 py-4">
             <div className="flex justify-between gap-3">
-              <p className="font-medium text-wl-text">{n.title}</p>
-              <span className="text-[11px] text-wl-muted">{formatRelative(n.at)}</span>
+              <p className="font-medium text-cf-text">{n.title}</p>
+              <span className="text-[11px] text-cf-muted">{formatRelative(n.at)}</span>
             </div>
-            <p className="mt-1 text-sm text-wl-muted">{n.body}</p>
+            <p className="mt-1 text-sm text-cf-muted">{n.body}</p>
           </li>
         ))}
       </ul>

@@ -16,20 +16,20 @@ export default function WealthHealthPage() {
       />
       <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
         <WealthHealthBadge health={health} />
-        <div className="wl-card space-y-5 p-5">
+        <div className="cf-card space-y-5 p-5">
           {health.factors.map((f) => (
             <div key={f.key}>
               <div className="mb-1.5 flex items-center justify-between gap-2 text-sm">
-                <span className="font-medium text-wl-text">{f.label}</span>
-                <span className="text-wl-muted">{f.score}/100</span>
+                <span className="font-medium text-cf-text">{f.label}</span>
+                <span className="text-cf-muted">{f.score}/100</span>
               </div>
               <ProgressBar value={f.score / 100} />
-              <p className="mt-1 text-xs text-wl-muted">{f.note}</p>
+              <p className="mt-1 text-xs text-cf-muted">{f.note}</p>
             </div>
           ))}
         </div>
       </div>
-      <p className="rounded-xl border border-wl-border bg-wl-surface px-4 py-3 text-xs text-wl-muted">
+      <p className="rounded-xl border border-cf-border bg-cf-surface px-4 py-3 text-xs text-cf-muted">
         {health.disclaimer}
       </p>
       <div className="flex flex-wrap gap-2">
@@ -38,8 +38,8 @@ export default function WealthHealthPage() {
             key={tier}
             className={`rounded-full px-3 py-1 text-xs font-semibold ${
               tier === health.tier
-                ? "bg-wl-primary text-white"
-                : "border border-wl-border text-wl-muted"
+                ? "bg-cf-primary text-white"
+                : "border border-cf-border text-cf-muted"
             }`}
           >
             {tier}

@@ -98,13 +98,13 @@ export default function InvestmentsPage() {
         renderItem={(inv, controls) => {
           const gain = inv.costBasis != null ? inv.value - inv.costBasis : null;
           return (
-            <article className="wl-card flex items-start justify-between gap-3 p-5">
+            <article className="cf-card flex items-start justify-between gap-3 p-5">
               <div className="min-w-0">
                 <div className="mb-1 flex flex-wrap items-center gap-2">
                   <h3 className="font-display text-lg font-semibold">{inv.name}</h3>
                   <StatusPill status={inv.provenance} />
                 </div>
-                <p className="text-xs uppercase tracking-wide text-wl-muted">
+                <p className="text-xs uppercase tracking-wide text-cf-muted">
                   {inv.type} · risk {inv.risk} · {inv.liquidity}
                 </p>
                 <p className="mt-3 font-display text-2xl font-semibold tabular-nums">
@@ -112,13 +112,13 @@ export default function InvestmentsPage() {
                 </p>
                 {gain != null && (
                   <p
-                    className={`mt-1 text-xs tabular-nums ${gain >= 0 ? "text-wl-success" : "text-wl-danger"}`}
+                    className={`mt-1 text-xs tabular-nums ${gain >= 0 ? "text-cf-success" : "text-cf-danger"}`}
                   >
                     {gain >= 0 ? "+" : "−"}
                     {formatKes(Math.abs(gain))} against {formatKes(inv.costBasis!)} invested
                   </p>
                 )}
-                {inv.notes && <p className="mt-2 text-xs text-wl-muted">{inv.notes}</p>}
+                {inv.notes && <p className="mt-2 text-xs text-cf-muted">{inv.notes}</p>}
               </div>
               {controls}
             </article>

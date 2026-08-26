@@ -17,15 +17,15 @@ import { Plus, Send, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 const field =
-  "w-full rounded-xl border border-wl-border bg-wl-surface-2 px-3 py-2.5 text-sm text-wl-text outline-none focus:border-wl-primary/50";
+  "w-full rounded-xl border border-cf-border bg-cf-surface-2 px-3 py-2.5 text-sm text-cf-text outline-none focus:border-cf-primary/50";
 
 const STATUS_TONE: Record<string, string> = {
-  paid: "bg-wl-success/15 text-wl-success",
-  part_paid: "bg-wl-warning/15 text-wl-warning",
-  overdue: "bg-wl-danger/15 text-wl-danger",
-  sent: "bg-wl-primary/10 text-wl-secondary",
-  draft: "bg-wl-surface-2 text-wl-muted",
-  cancelled: "bg-wl-surface-2 text-wl-muted",
+  paid: "bg-cf-success/15 text-cf-success",
+  part_paid: "bg-cf-warning/15 text-cf-warning",
+  overdue: "bg-cf-danger/15 text-cf-danger",
+  sent: "bg-cf-primary/10 text-cf-primary",
+  draft: "bg-cf-surface-2 text-cf-muted",
+  cancelled: "bg-cf-surface-2 text-cf-muted",
 };
 
 const BUCKETS: { key: keyof Ageing["buckets"]; label: string }[] = [
@@ -72,10 +72,10 @@ function CollectPanel({ invoice, onDone }: { invoice: Invoice; onDone: () => voi
   }
 
   return (
-    <form onSubmit={submit} className="wl-card mt-2 space-y-3 p-5">
+    <form onSubmit={submit} className="cf-card mt-2 space-y-3 p-5">
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="block space-y-1.5 text-sm">
-          <span className="text-xs font-medium uppercase tracking-wide text-wl-muted">Collect into</span>
+          <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Collect into</span>
           <select value={accountId} onChange={(e) => setAccountId(e.target.value)} className={field}>
             {data.accounts.map((a) => (
               <option key={a.id} value={a.id}>
@@ -85,7 +85,7 @@ function CollectPanel({ invoice, onDone }: { invoice: Invoice; onDone: () => voi
           </select>
         </label>
         <label className="block space-y-1.5 text-sm">
-          <span className="text-xs font-medium uppercase tracking-wide text-wl-muted">Prompt type</span>
+          <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Prompt type</span>
           <select
             value={channel}
             onChange={(e) => setChannel(e.target.value as "mpesa" | "loop")}
@@ -96,7 +96,7 @@ function CollectPanel({ invoice, onDone }: { invoice: Invoice; onDone: () => voi
           </select>
         </label>
         <label className="block space-y-1.5 text-sm">
-          <span className="text-xs font-medium uppercase tracking-wide text-wl-muted">Customer phone</span>
+          <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Customer phone</span>
           <input
             required
             value={phone}
@@ -106,7 +106,7 @@ function CollectPanel({ invoice, onDone }: { invoice: Invoice; onDone: () => voi
           />
         </label>
         <label className="block space-y-1.5 text-sm">
-          <span className="text-xs font-medium uppercase tracking-wide text-wl-muted">Amount (KES)</span>
+          <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Amount (KES)</span>
           <input
             type="number"
             step="0.01"
@@ -118,13 +118,13 @@ function CollectPanel({ invoice, onDone }: { invoice: Invoice; onDone: () => voi
         </label>
       </div>
 
-      {error && <p className="text-sm text-wl-danger">{error}</p>}
-      {done && <p className="text-sm text-wl-success">{done}</p>}
+      {error && <p className="text-sm text-cf-danger">{error}</p>}
+      {done && <p className="text-sm text-cf-success">{done}</p>}
 
       <button
         type="submit"
         disabled={busy}
-        className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-wl-primary to-wl-secondary px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+        className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cf-primary to-cf-primary-deep px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
       >
         <Send className="h-3.5 w-3.5" />
         {busy ? "Sending…" : "Request payment"}
@@ -156,9 +156,9 @@ function RecordPanel({ invoice, onDone }: { invoice: Invoice; onDone: () => void
   }
 
   return (
-    <form onSubmit={submit} className="wl-card mt-2 space-y-3 p-5">
+    <form onSubmit={submit} className="cf-card mt-2 space-y-3 p-5">
       <label className="block space-y-1.5 text-sm">
-        <span className="text-xs font-medium uppercase tracking-wide text-wl-muted">
+        <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">
           Amount received off-platform (KES)
         </span>
         <input
@@ -172,12 +172,12 @@ function RecordPanel({ invoice, onDone }: { invoice: Invoice; onDone: () => void
           className={field}
         />
       </label>
-      {error && <p className="text-sm text-wl-danger">{error}</p>}
-      {done && <p className="text-sm text-wl-success">{done}</p>}
+      {error && <p className="text-sm text-cf-danger">{error}</p>}
+      {done && <p className="text-sm text-cf-success">{done}</p>}
       <button
         type="submit"
         disabled={busy}
-        className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-wl-primary to-wl-secondary px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+        className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cf-primary to-cf-primary-deep px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
       >
         {busy ? "Recording…" : "Record payment"}
       </button>
@@ -237,18 +237,18 @@ export default function ReceivablesPage() {
       />
 
       {ageing && ageing.totalOutstanding > 0 && (
-        <section className="wl-card p-5">
+        <section className="cf-card p-5">
           <h2 className="mb-3 font-display text-lg font-semibold">Ageing</h2>
           <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
             {BUCKETS.map((b) => {
               const value = ageing.buckets[b.key];
               return (
-                <div key={b.key} className="rounded-xl border border-wl-border bg-[var(--wealth-inset)] px-4 py-3">
-                  <p className="text-[10px] uppercase tracking-[0.14em] text-wl-muted">{b.label}</p>
+                <div key={b.key} className="rounded-xl border border-cf-border bg-[var(--cf-inset)] px-4 py-3">
+                  <p className="text-[10px] uppercase tracking-[0.14em] text-cf-muted">{b.label}</p>
                   <p
                     className={cn(
                       "font-display text-lg font-semibold tabular-nums",
-                      b.key === "d90_plus" && value > 0 && "text-wl-danger",
+                      b.key === "d90_plus" && value > 0 && "text-cf-danger",
                     )}
                   >
                     {formatKes(value)}
@@ -267,7 +267,7 @@ export default function ReceivablesPage() {
           onClick={() => setAdding((v) => !v)}
           className={cn(
             "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold",
-            adding ? "border-wl-border text-wl-muted" : "border-wl-primary/40 text-wl-text hover:bg-wl-primary/10",
+            adding ? "border-cf-border text-cf-muted" : "border-cf-primary/40 text-cf-text hover:bg-cf-primary/10",
           )}
         >
           {adding ? <X className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
@@ -275,7 +275,7 @@ export default function ReceivablesPage() {
         </button>
       </div>
 
-      {error && <p className="text-sm text-wl-danger">{error}</p>}
+      {error && <p className="text-sm text-cf-danger">{error}</p>}
 
       {adding && (
         <form
@@ -294,14 +294,14 @@ export default function ReceivablesPage() {
             setAdding(false);
             void load();
           }}
-          className="wl-card grid gap-3 p-5 sm:grid-cols-2"
+          className="cf-card grid gap-3 p-5 sm:grid-cols-2"
         >
           <label className="block space-y-1.5 text-sm">
-            <span className="text-xs font-medium uppercase tracking-wide text-wl-muted">Customer</span>
+            <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Customer</span>
             <input required value={customerName} onChange={(e) => setCustomerName(e.target.value)} className={field} />
           </label>
           <label className="block space-y-1.5 text-sm">
-            <span className="text-xs font-medium uppercase tracking-wide text-wl-muted">Phone</span>
+            <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Phone</span>
             <input
               value={customerPhone}
               onChange={(e) => setCustomerPhone(e.target.value)}
@@ -310,7 +310,7 @@ export default function ReceivablesPage() {
             />
           </label>
           <label className="block space-y-1.5 text-sm">
-            <span className="text-xs font-medium uppercase tracking-wide text-wl-muted">Amount (KES)</span>
+            <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Amount (KES)</span>
             <input
               type="number"
               step="0.01"
@@ -321,22 +321,22 @@ export default function ReceivablesPage() {
             />
           </label>
           <label className="block space-y-1.5 text-sm">
-            <span className="text-xs font-medium uppercase tracking-wide text-wl-muted">Due date</span>
+            <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Due date</span>
             <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className={field} />
           </label>
           <button
             type="submit"
-            className="rounded-full bg-gradient-to-r from-wl-primary to-wl-secondary px-5 py-2.5 text-sm font-semibold text-white sm:col-span-2 sm:justify-self-start"
+            className="rounded-full bg-gradient-to-r from-cf-primary to-cf-primary-deep px-5 py-2.5 text-sm font-semibold text-white sm:col-span-2 sm:justify-self-start"
           >
             Create invoice
           </button>
         </form>
       )}
 
-      {loading && <p className="text-sm text-wl-muted">Loading…</p>}
+      {loading && <p className="text-sm text-cf-muted">Loading…</p>}
 
       {!loading && invoices.length === 0 && (
-        <p className="rounded-xl border border-dashed border-wl-border px-4 py-10 text-center text-sm text-wl-muted">
+        <p className="rounded-xl border border-dashed border-cf-border px-4 py-10 text-center text-sm text-cf-muted">
           No invoices yet. Raise one and request payment without leaving the page.
         </p>
       )}
@@ -344,7 +344,7 @@ export default function ReceivablesPage() {
       <div className="space-y-3">
         {invoices.map((inv) => (
           <div key={inv.id}>
-            <article className="wl-card p-5">
+            <article className="cf-card p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
@@ -359,7 +359,7 @@ export default function ReceivablesPage() {
                       {inv.daysOverdue > 0 ? ` · ${inv.daysOverdue}d` : ""}
                     </span>
                   </div>
-                  <p className="mt-1 text-xs text-wl-muted">
+                  <p className="mt-1 text-xs text-cf-muted">
                     {inv.customerName}
                     {inv.customerPhone ? ` · ${inv.customerPhone}` : ""}
                     {inv.dueDate ? ` · due ${inv.dueDate.slice(0, 10)}` : ""}
@@ -367,7 +367,7 @@ export default function ReceivablesPage() {
                   <p className="mt-3 font-display text-2xl font-semibold tabular-nums">
                     {formatKes(inv.outstanding)}
                     {inv.amountPaid > 0 && (
-                      <span className="text-sm font-normal text-wl-muted">
+                      <span className="text-sm font-normal text-cf-muted">
                         {" "}
                         outstanding of {formatKes(inv.amount)}
                       </span>
@@ -383,7 +383,7 @@ export default function ReceivablesPage() {
                           setRecording(null);
                           setCollecting(collecting === inv.id ? null : inv.id);
                         }}
-                        className="rounded-full border border-wl-primary/40 px-4 py-1.5 text-xs font-semibold text-wl-text hover:bg-wl-primary/10"
+                        className="rounded-full border border-cf-primary/40 px-4 py-1.5 text-xs font-semibold text-cf-text hover:bg-cf-primary/10"
                       >
                         {collecting === inv.id ? "Close" : "Request payment"}
                       </button>
@@ -393,7 +393,7 @@ export default function ReceivablesPage() {
                           setCollecting(null);
                           setRecording(recording === inv.id ? null : inv.id);
                         }}
-                        className="rounded-full border border-wl-border px-4 py-1.5 text-xs font-semibold text-wl-muted hover:bg-[var(--wealth-inset)] hover:text-wl-text"
+                        className="rounded-full border border-cf-border px-4 py-1.5 text-xs font-semibold text-cf-muted hover:bg-[var(--cf-inset)] hover:text-cf-text"
                       >
                         {recording === inv.id ? "Close" : "Record payment"}
                       </button>
@@ -406,7 +406,7 @@ export default function ReceivablesPage() {
                       await deleteInvoice(entityId, inv.id);
                       void load();
                     }}
-                    className="rounded-lg border border-wl-border p-1.5 text-wl-muted hover:text-wl-danger"
+                    className="rounded-lg border border-cf-border p-1.5 text-cf-muted hover:text-cf-danger"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>

@@ -22,7 +22,7 @@ export type FieldSpec = {
 type Values = Record<string, string | number | boolean>;
 
 const inputClass =
-  "w-full rounded-xl border border-wl-border bg-wl-surface-2 px-3 py-2.5 text-sm text-wl-text outline-none focus:border-wl-primary/50";
+  "w-full rounded-xl border border-cf-border bg-cf-surface-2 px-3 py-2.5 text-sm text-cf-text outline-none focus:border-cf-primary/50";
 
 function Form({
   fields,
@@ -72,7 +72,7 @@ function Form({
     <form onSubmit={handle} className="grid gap-3 sm:grid-cols-2">
       {fields.map((f) => (
         <label key={f.key} className="block space-y-1.5 text-sm">
-          <span className="text-xs font-medium uppercase tracking-wide text-wl-muted">{f.label}</span>
+          <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">{f.label}</span>
           {f.kind === "select" ? (
             <select
               value={String(values[f.key] ?? "")}
@@ -96,24 +96,24 @@ function Form({
               className={inputClass}
             />
           )}
-          {f.hint && <span className="block text-[11px] text-wl-muted">{f.hint}</span>}
+          {f.hint && <span className="block text-[11px] text-cf-muted">{f.hint}</span>}
         </label>
       ))}
 
-      {error && <p className="text-sm text-wl-danger sm:col-span-2">{error}</p>}
+      {error && <p className="text-sm text-cf-danger sm:col-span-2">{error}</p>}
 
       <div className="flex gap-2 sm:col-span-2">
         <button
           type="submit"
           disabled={busy}
-          className="rounded-full bg-gradient-to-r from-wl-primary to-wl-secondary px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+          className="rounded-full bg-gradient-to-r from-cf-primary to-cf-primary-deep px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
         >
           {busy ? "Saving…" : submitLabel}
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-full border border-wl-border px-5 py-2.5 text-sm font-semibold text-wl-muted hover:text-wl-text"
+          className="rounded-full border border-cf-border px-5 py-2.5 text-sm font-semibold text-cf-muted hover:text-cf-text"
         >
           Cancel
         </button>
@@ -178,7 +178,7 @@ export function RecordManager<T extends { id: string }>({
           setEditingId(item.id === editingId ? null : item.id);
           setAdding(false);
         }}
-        className="rounded-lg border border-wl-border p-1.5 text-wl-muted hover:text-wl-text"
+        className="rounded-lg border border-cf-border p-1.5 text-cf-muted hover:text-cf-text"
       >
         <Pencil className="h-3.5 w-3.5" />
       </button>
@@ -187,7 +187,7 @@ export function RecordManager<T extends { id: string }>({
           <button
             type="button"
             onClick={() => void onDelete(item.id)}
-            className="rounded-lg bg-wl-danger/15 px-2 py-1.5 text-[11px] font-semibold text-wl-danger"
+            className="rounded-lg bg-cf-danger/15 px-2 py-1.5 text-[11px] font-semibold text-cf-danger"
           >
             Confirm
           </button>
@@ -195,7 +195,7 @@ export function RecordManager<T extends { id: string }>({
             type="button"
             aria-label="Cancel delete"
             onClick={() => setPendingDelete(null)}
-            className="rounded-lg border border-wl-border p-1.5 text-wl-muted"
+            className="rounded-lg border border-cf-border p-1.5 text-cf-muted"
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -205,7 +205,7 @@ export function RecordManager<T extends { id: string }>({
           type="button"
           aria-label={`Delete ${title}`}
           onClick={() => setPendingDelete(item.id)}
-          className="rounded-lg border border-wl-border p-1.5 text-wl-muted hover:text-wl-danger"
+          className="rounded-lg border border-cf-border p-1.5 text-cf-muted hover:text-cf-danger"
         >
           <Trash2 className="h-3.5 w-3.5" />
         </button>
@@ -226,8 +226,8 @@ export function RecordManager<T extends { id: string }>({
           className={cn(
             "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold transition-colors",
             adding
-              ? "border-wl-border text-wl-muted"
-              : "border-wl-primary/40 text-wl-text hover:bg-wl-primary/10",
+              ? "border-cf-border text-cf-muted"
+              : "border-cf-primary/40 text-cf-text hover:bg-cf-primary/10",
           )}
         >
           {adding ? <X className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
@@ -235,10 +235,10 @@ export function RecordManager<T extends { id: string }>({
         </button>
       </div>
 
-      {error && <p className="text-sm text-wl-danger">{error}</p>}
+      {error && <p className="text-sm text-cf-danger">{error}</p>}
 
       {adding && (
-        <section className="wl-card p-5">
+        <section className="cf-card p-5">
           <Form
             fields={fields}
             submitLabel="Add"
@@ -253,7 +253,7 @@ export function RecordManager<T extends { id: string }>({
       )}
 
       {items.length === 0 && !adding && (
-        <p className="rounded-xl border border-dashed border-wl-border px-4 py-10 text-center text-sm text-wl-muted">
+        <p className="rounded-xl border border-dashed border-cf-border px-4 py-10 text-center text-sm text-cf-muted">
           {emptyMessage}
         </p>
       )}
@@ -263,7 +263,7 @@ export function RecordManager<T extends { id: string }>({
           <div key={item.id}>
             {renderItem(item, controlsFor(item))}
             {editingId === item.id && (
-              <section className="wl-card mt-2 p-5">
+              <section className="cf-card mt-2 p-5">
                 <Form
                   fields={fields}
                   initial={toValues(item)}

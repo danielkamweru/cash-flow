@@ -61,30 +61,30 @@ export default function IntelligencePage() {
       <ComingSoonBanner feature="Live market feeds (NSE, CBK/DhowCSD, MMF providers)" />
 
       {isPersonal && coach && (
-        <section className="wl-card space-y-4 p-5">
+        <section className="cf-card space-y-4 p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-wl-secondary">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-cf-primary">
                 Personal surplus plan
               </p>
-              <h2 className="mt-1 font-display text-xl font-semibold text-wl-text">
+              <h2 className="mt-1 font-display text-xl font-semibold text-cf-text">
                 {coach.investmentAdvice.title}
               </h2>
-              <p className="mt-2 text-sm text-wl-muted">{coach.investmentAdvice.plainAdvice}</p>
+              <p className="mt-2 text-sm text-cf-muted">{coach.investmentAdvice.plainAdvice}</p>
             </div>
             <div className="flex flex-col items-end gap-2">
               <span
                 className={cn(
                   "rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide",
                   coach.automation?.enabled
-                    ? "bg-wl-success/15 text-wl-success"
-                    : "bg-wl-warning/15 text-wl-warning",
+                    ? "bg-cf-success/15 text-cf-success"
+                    : "bg-cf-warning/15 text-cf-warning",
                 )}
               >
                 {coach.automation?.enabled ? "Autonomous" : "Recommend only"}
               </span>
               {coach.investmentAdvice.allowed && (
-                <p className="text-sm font-semibold text-wl-text">
+                <p className="text-sm font-semibold text-cf-text">
                   {formatKes(coach.investmentAdvice.suggestedAmount)} to allocate
                 </p>
               )}
@@ -92,10 +92,10 @@ export default function IntelligencePage() {
           </div>
 
           {automationOff && (
-            <p className="rounded-xl border border-wl-warning/30 bg-wl-warning/10 px-3 py-2 text-sm text-wl-text-secondary">
+            <p className="rounded-xl border border-cf-warning/30 bg-cf-warning/10 px-3 py-2 text-sm text-cf-text-secondary">
               Automation is disabled — these are the best market options for your surplus. Enable
               autonomous routing anytime on the{" "}
-              <Link href="/automation" className="font-semibold text-wl-secondary hover:underline">
+              <Link href="/automation" className="font-semibold text-cf-primary hover:underline">
                 Automation
               </Link>{" "}
               tab.
@@ -107,24 +107,24 @@ export default function IntelligencePage() {
               {allocations.map((leg) => (
                 <article
                   key={`${leg.instrumentId}-${leg.role}`}
-                  className="rounded-xl border border-wl-primary/30 bg-wl-primary/5 p-4"
+                  className="rounded-xl border border-cf-primary/30 bg-cf-primary/5 p-4"
                 >
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-wl-secondary">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-cf-primary">
                     Recommended · {leg.role}
                   </p>
                   <h3 className="mt-1 font-display text-lg font-semibold">{leg.name}</h3>
-                  <p className="text-xs text-wl-muted">{leg.provider}</p>
-                  <p className="mt-3 font-display text-xl font-semibold text-wl-text">
+                  <p className="text-xs text-cf-muted">{leg.provider}</p>
+                  <p className="mt-3 font-display text-xl font-semibold text-cf-text">
                     {formatKes(leg.amount)}
                   </p>
-                  <p className="text-xs text-wl-muted">
+                  <p className="text-xs text-cf-muted">
                     {Math.round(leg.weight * 100)}% · {leg.yieldValue} · {leg.risk}
                   </p>
                 </article>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-wl-muted">
+            <p className="text-sm text-cf-muted">
               {coach.investmentAdvice.allowed
                 ? "No instruments matched current minimums."
                 : coach.investmentAdvice.plainAdvice}
@@ -146,45 +146,45 @@ export default function IntelligencePage() {
                   <article
                     key={m.id}
                     className={cn(
-                      "wl-card p-5",
-                      isPick && "border-wl-primary/40 ring-1 ring-wl-primary/20",
+                      "cf-card p-5",
+                      isPick && "border-cf-primary/40 ring-1 ring-cf-primary/20",
                     )}
                   >
                     <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                       <h3 className="font-display text-lg font-semibold">{m.name}</h3>
                       <div className="flex flex-wrap gap-1.5">
                         {isPick && (
-                          <span className="rounded-md bg-wl-primary/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-wl-secondary">
+                          <span className="rounded-md bg-cf-primary/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-cf-primary">
                             Best for you
                           </span>
                         )}
                         <StatusPill status={m.dataStatus} />
                       </div>
                     </div>
-                    <p className="text-xs text-wl-muted">{m.provider}</p>
-                    <p className="mt-3 text-sm text-wl-muted">{m.yieldLabel}</p>
-                    <p className="font-display text-2xl font-semibold text-wl-secondary">{m.yieldValue}</p>
-                    <dl className="mt-3 grid grid-cols-2 gap-2 text-xs text-wl-muted">
+                    <p className="text-xs text-cf-muted">{m.provider}</p>
+                    <p className="mt-3 text-sm text-cf-muted">{m.yieldLabel}</p>
+                    <p className="font-display text-2xl font-semibold text-cf-primary">{m.yieldValue}</p>
+                    <dl className="mt-3 grid grid-cols-2 gap-2 text-xs text-cf-muted">
                       <div>
                         <dt>Risk</dt>
-                        <dd className="text-wl-text">{m.risk}</dd>
+                        <dd className="text-cf-text">{m.risk}</dd>
                       </div>
                       <div>
                         <dt>Liquidity</dt>
-                        <dd className="text-wl-text">{m.liquidity}</dd>
+                        <dd className="text-cf-text">{m.liquidity}</dd>
                       </div>
                       <div>
                         <dt>Min investment</dt>
-                        <dd className="text-wl-text">{formatKes(m.minInvestment)}</dd>
+                        <dd className="text-cf-text">{formatKes(m.minInvestment)}</dd>
                       </div>
                       {m.asOf && (
                         <div>
                           <dt>As of</dt>
-                          <dd className="text-wl-text">{m.asOf.slice(0, 10)}</dd>
+                          <dd className="text-cf-text">{m.asOf.slice(0, 10)}</dd>
                         </div>
                       )}
                     </dl>
-                    {m.notes && <p className="mt-3 text-xs text-wl-muted">{m.notes}</p>}
+                    {m.notes && <p className="mt-3 text-xs text-cf-muted">{m.notes}</p>}
                   </article>
                 );
               })}

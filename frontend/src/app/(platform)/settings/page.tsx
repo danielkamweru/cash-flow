@@ -49,21 +49,21 @@ function TransactionPinCard({ hasPin, onSaved }: { hasPin: boolean; onSaved: () 
   }
 
   const field =
-    "w-full rounded-xl border border-wl-border bg-wl-surface-2 px-3 py-2.5 text-sm text-wl-text outline-none focus:border-wl-primary/50";
+    "w-full rounded-xl border border-cf-border bg-cf-surface-2 px-3 py-2.5 text-sm text-cf-text outline-none focus:border-cf-primary/50";
 
   return (
-    <section className="wl-card space-y-4 p-5">
+    <section className="cf-card space-y-4 p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="font-display text-lg font-semibold">Transaction PIN</h2>
-          <p className="mt-1 text-sm text-wl-muted">
+          <p className="mt-1 text-sm text-cf-muted">
             Required to send money via M-Pesa or Pesalink. LOOP wallet transfers do not use it.
           </p>
         </div>
         <span
           className={cn(
             "inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold",
-            hasPin ? "bg-wl-success/15 text-wl-success" : "bg-wl-warning/15 text-wl-warning",
+            hasPin ? "bg-cf-success/15 text-cf-success" : "bg-cf-warning/15 text-cf-warning",
           )}
         >
           <ShieldCheck className="h-3.5 w-3.5" />
@@ -73,7 +73,7 @@ function TransactionPinCard({ hasPin, onSaved }: { hasPin: boolean; onSaved: () 
 
       <form onSubmit={onSubmit} className="grid gap-3 sm:grid-cols-2">
         <label className="space-y-1.5 text-sm">
-          <span className="block text-xs font-medium uppercase tracking-wide text-wl-muted">
+          <span className="block text-xs font-medium uppercase tracking-wide text-cf-muted">
             {hasPin ? "New PIN" : "Choose a PIN"}
           </span>
           <input
@@ -89,7 +89,7 @@ function TransactionPinCard({ hasPin, onSaved }: { hasPin: boolean; onSaved: () 
           />
         </label>
         <label className="space-y-1.5 text-sm">
-          <span className="block text-xs font-medium uppercase tracking-wide text-wl-muted">
+          <span className="block text-xs font-medium uppercase tracking-wide text-cf-muted">
             Confirm PIN
           </span>
           <input
@@ -105,7 +105,7 @@ function TransactionPinCard({ hasPin, onSaved }: { hasPin: boolean; onSaved: () 
           />
         </label>
         <label className="space-y-1.5 text-sm sm:col-span-2">
-          <span className="block text-xs font-medium uppercase tracking-wide text-wl-muted">
+          <span className="block text-xs font-medium uppercase tracking-wide text-cf-muted">
             Confirm with your account password
           </span>
           <input
@@ -122,12 +122,12 @@ function TransactionPinCard({ hasPin, onSaved }: { hasPin: boolean; onSaved: () 
           <button
             type="submit"
             disabled={saving}
-            className="rounded-full bg-gradient-to-r from-wl-primary to-wl-secondary px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+            className="rounded-full bg-gradient-to-r from-cf-primary to-cf-primary-deep px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
           >
             {saving ? "Saving…" : hasPin ? "Update PIN" : "Set PIN"}
           </button>
-          {saved && <span className="text-sm text-wl-success">PIN saved.</span>}
-          {error && <span className="text-sm text-wl-danger">{error}</span>}
+          {saved && <span className="text-sm text-cf-success">PIN saved.</span>}
+          {error && <span className="text-sm text-cf-danger">{error}</span>}
         </div>
       </form>
     </section>
@@ -152,15 +152,15 @@ export default function SettingsPage() {
     <div className="mx-auto max-w-3xl space-y-6">
       <PageHeader title="Settings" subtitle="Profile, risk preferences, and trust controls." />
 
-      <section className="wl-card space-y-4 p-5">
+      <section className="cf-card space-y-4 p-5">
         <div className="flex items-center justify-between gap-4">
           <div>
             <h2 className="font-display text-lg font-semibold">Appearance</h2>
-            <p className="text-sm text-wl-muted">Switch between dark and light dashboard themes.</p>
+            <p className="text-sm text-cf-muted">Switch between dark and light dashboard themes.</p>
           </div>
           <ThemeToggle />
         </div>
-        <div className="inline-flex rounded-full border border-wl-border bg-wl-surface-2 p-1">
+        <div className="inline-flex rounded-full border border-cf-border bg-cf-surface-2 p-1">
           {(["dark", "light"] as const).map((option) => (
             <button
               key={option}
@@ -169,8 +169,8 @@ export default function SettingsPage() {
               className={cn(
                 "rounded-full px-4 py-1.5 text-xs font-semibold capitalize transition-colors",
                 theme === option
-                  ? "bg-gradient-to-r from-wl-primary to-wl-secondary text-white"
-                  : "text-wl-muted hover:text-wl-text",
+                  ? "bg-gradient-to-r from-cf-primary to-cf-primary-deep text-white"
+                  : "text-cf-muted hover:text-cf-text",
               )}
             >
               {option}
@@ -179,57 +179,57 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      <section className="wl-card space-y-3 p-5">
+      <section className="cf-card space-y-3 p-5">
         <h2 className="font-display text-lg font-semibold">Profile</h2>
-        {userError && <p className="text-sm text-wl-danger">{userError}</p>}
+        {userError && <p className="text-sm text-cf-danger">{userError}</p>}
         <dl className="grid gap-3 text-sm sm:grid-cols-2">
           <div>
-            <dt className="text-wl-muted">Name</dt>
+            <dt className="text-cf-muted">Name</dt>
             <dd>{user?.name ?? "…"}</dd>
           </div>
           <div>
-            <dt className="text-wl-muted">Location</dt>
+            <dt className="text-cf-muted">Location</dt>
             <dd>{user?.location ?? "—"}</dd>
           </div>
           <div>
-            <dt className="text-wl-muted">Email</dt>
+            <dt className="text-cf-muted">Email</dt>
             <dd>{user?.email ?? "…"}</dd>
           </div>
           <div>
-            <dt className="text-wl-muted">Phone</dt>
+            <dt className="text-cf-muted">Phone</dt>
             <dd>{user?.phone ?? "—"}</dd>
           </div>
         </dl>
       </section>
-      <section className="wl-card space-y-3 p-5">
+      <section className="cf-card space-y-3 p-5">
         <h2 className="font-display text-lg font-semibold">Risk profile · {data.entity.name}</h2>
         {data.risk ? (
           <>
             <dl className="grid gap-3 text-sm sm:grid-cols-3">
               <div>
-                <dt className="text-wl-muted">Horizon</dt>
+                <dt className="text-cf-muted">Horizon</dt>
                 <dd className="capitalize">{data.risk.horizon}</dd>
               </div>
               <div>
-                <dt className="text-wl-muted">Tolerance</dt>
+                <dt className="text-cf-muted">Tolerance</dt>
                 <dd className="capitalize">{data.risk.tolerance}</dd>
               </div>
               <div>
-                <dt className="text-wl-muted">Emergency months</dt>
+                <dt className="text-cf-muted">Emergency months</dt>
                 <dd>{data.risk.emergencyFundMonthsTarget}</dd>
               </div>
             </dl>
-            {data.risk.notes && <p className="text-xs text-wl-muted">{data.risk.notes}</p>}
+            {data.risk.notes && <p className="text-xs text-cf-muted">{data.risk.notes}</p>}
           </>
         ) : (
-          <p className="text-sm text-wl-muted">No risk profile on this entity yet.</p>
+          <p className="text-sm text-cf-muted">No risk profile on this entity yet.</p>
         )}
       </section>
       <TransactionPinCard hasPin={Boolean(user?.hasPin)} onSaved={() => setReloadKey((k) => k + 1)} />
 
-      <section className="wl-card p-5 text-sm text-wl-muted">
+      <section className="cf-card p-5 text-sm text-cf-muted">
         Consent, audit history, and provider authorization will live here as integrations come online.
-        Theme tokens include reserved NCPA primary/secondary variables for institutional branding.
+        Cash-Flow uses a modern Kenyan fintech-inspired green design system.
       </section>
     </div>
   );

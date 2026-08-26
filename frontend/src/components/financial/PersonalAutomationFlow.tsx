@@ -60,16 +60,16 @@ export function PersonalAutomationFlow({
   }
 
   return (
-    <section className="wl-card space-y-5 p-4 sm:p-5 animate-fade-up">
+    <section className="cf-card space-y-5 p-4 sm:p-5 animate-fade-up">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-wl-secondary">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-cf-primary">
             Automation flow
           </p>
-          <h2 className="mt-1 font-display text-xl font-semibold text-wl-text">
+          <h2 className="mt-1 font-display text-xl font-semibold text-cf-text">
             {enabled ? "Autonomous surplus investing" : "Recommendations only"}
           </h2>
-          <p className="mt-1 max-w-2xl text-sm text-wl-muted">
+          <p className="mt-1 max-w-2xl text-sm text-cf-muted">
             {enabled
               ? "After expenses and emergency savings, safe surplus is ranked into the best MMF, bonds, or equities and routed automatically (demo)."
               : "Automation is off. You still get the best market picks below and on Market Intelligence — nothing moves until you act."}
@@ -85,25 +85,25 @@ export function PersonalAutomationFlow({
             onClick={() => void toggle()}
             className={cn(
               "relative inline-flex h-10 w-[4.5rem] items-center rounded-full border transition-colors disabled:opacity-60",
-              enabled ? "border-wl-success/40 bg-wl-success/20" : "border-wl-border bg-[var(--wealth-inset)]",
+              enabled ? "border-cf-success/40 bg-cf-success/20" : "border-cf-border bg-[var(--cf-inset)]",
             )}
           >
             <span
               className={cn(
-                "absolute h-8 w-8 rounded-full bg-wl-surface shadow transition-transform",
+                "absolute h-8 w-8 rounded-full bg-cf-surface shadow transition-transform",
                 enabled ? "translate-x-9" : "translate-x-1",
               )}
             />
             <span className="sr-only">{enabled ? "Disable automation" : "Enable automation"}</span>
           </button>
-          <p className="text-center text-xs font-medium text-wl-muted sm:text-right">
+          <p className="text-center text-xs font-medium text-cf-muted sm:text-right">
             {busy ? "Updating…" : enabled ? "Enabled" : "Disabled"}
           </p>
         </div>
       </div>
 
       {error && (
-        <p className="rounded-xl border border-wl-danger/30 bg-wl-danger/10 px-3 py-2 text-sm text-wl-danger">
+        <p className="rounded-xl border border-cf-danger/30 bg-cf-danger/10 px-3 py-2 text-sm text-cf-danger">
           {error}
         </p>
       )}
@@ -117,23 +117,23 @@ export function PersonalAutomationFlow({
                 <div
                   className={cn(
                     "flex min-h-[4.5rem] w-full flex-col justify-center rounded-xl border px-3 py-2",
-                    state === "done" && "border-wl-success/40 bg-wl-success/10",
-                    state === "active" && "border-wl-primary/40 bg-wl-primary/10",
-                    state === "skipped" && "border-dashed border-wl-border bg-transparent",
-                    state === "pending" && "border-wl-border bg-[var(--wealth-inset)]",
+                    state === "done" && "border-cf-success/40 bg-cf-success/10",
+                    state === "active" && "border-cf-primary/40 bg-cf-primary/10",
+                    state === "skipped" && "border-dashed border-cf-border bg-transparent",
+                    state === "pending" && "border-cf-border bg-[var(--cf-inset)]",
                   )}
                 >
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-wl-muted">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-cf-muted">
                     Step {i + 1}
                   </span>
-                  <span className="mt-0.5 text-sm font-medium text-wl-text">{step.label}</span>
+                  <span className="mt-0.5 text-sm font-medium text-cf-text">{step.label}</span>
                   <span
                     className={cn(
                       "mt-1 text-[10px] font-semibold uppercase",
-                      state === "done" && "text-wl-success",
-                      state === "active" && "text-wl-secondary",
-                      state === "skipped" && "text-wl-warning",
-                      state === "pending" && "text-wl-muted",
+                      state === "done" && "text-cf-success",
+                      state === "active" && "text-cf-primary",
+                      state === "skipped" && "text-cf-warning",
+                      state === "pending" && "text-cf-muted",
                     )}
                   >
                     {state === "done"
@@ -148,7 +148,7 @@ export function PersonalAutomationFlow({
                   </span>
                 </div>
                 {i < FLOW.length - 1 && (
-                  <span className="shrink-0 text-wl-muted" aria-hidden>
+                  <span className="shrink-0 text-cf-muted" aria-hidden>
                     →
                   </span>
                 )}
@@ -159,19 +159,19 @@ export function PersonalAutomationFlow({
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-xl border border-wl-border bg-[var(--wealth-inset)] px-3 py-3">
-          <p className="text-[10px] uppercase tracking-wide text-wl-muted">Safe to invest</p>
-          <p className="mt-1 font-display text-lg font-semibold text-wl-text">
+        <div className="rounded-xl border border-cf-border bg-[var(--cf-inset)] px-3 py-3">
+          <p className="text-[10px] uppercase tracking-wide text-cf-muted">Safe to invest</p>
+          <p className="mt-1 font-display text-lg font-semibold text-cf-text">
             {formatKes(coach.safeToInvest)}
           </p>
         </div>
-        <div className="rounded-xl border border-wl-border bg-[var(--wealth-inset)] px-3 py-3">
-          <p className="text-[10px] uppercase tracking-wide text-wl-muted">Plan</p>
-          <p className="mt-1 text-sm font-semibold text-wl-text">{advice.title}</p>
+        <div className="rounded-xl border border-cf-border bg-[var(--cf-inset)] px-3 py-3">
+          <p className="text-[10px] uppercase tracking-wide text-cf-muted">Plan</p>
+          <p className="mt-1 text-sm font-semibold text-cf-text">{advice.title}</p>
         </div>
-        <div className="rounded-xl border border-wl-border bg-[var(--wealth-inset)] px-3 py-3">
-          <p className="text-[10px] uppercase tracking-wide text-wl-muted">Mode</p>
-          <p className="mt-1 text-sm font-semibold text-wl-text">
+        <div className="rounded-xl border border-cf-border bg-[var(--cf-inset)] px-3 py-3">
+          <p className="text-[10px] uppercase tracking-wide text-cf-muted">Mode</p>
+          <p className="mt-1 text-sm font-semibold text-cf-text">
             {enabled ? "Autonomous" : "Recommend only"}
           </p>
         </div>
@@ -182,35 +182,35 @@ export function PersonalAutomationFlow({
           {allocations.map((leg) => (
             <article
               key={`${leg.instrumentId}-${leg.role}`}
-              className="rounded-xl border border-wl-primary/30 bg-wl-primary/5 p-3"
+              className="rounded-xl border border-cf-primary/30 bg-cf-primary/5 p-3"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="text-[10px] uppercase tracking-wide text-wl-secondary">
+                  <p className="text-[10px] uppercase tracking-wide text-cf-primary">
                     {enabled ? "Auto-routing" : "Recommended"} · {leg.role}
                   </p>
-                  <p className="mt-0.5 font-medium text-wl-text">{leg.name}</p>
+                  <p className="mt-0.5 font-medium text-cf-text">{leg.name}</p>
                 </div>
-                <p className="shrink-0 font-display text-sm font-semibold text-wl-secondary">
+                <p className="shrink-0 font-display text-sm font-semibold text-cf-primary">
                   {Math.round(leg.weight * 100)}%
                 </p>
               </div>
-              <p className="mt-2 text-sm font-semibold text-wl-text">{formatKes(leg.amount)}</p>
-              <p className="mt-1 text-xs text-wl-muted">
+              <p className="mt-2 text-sm font-semibold text-cf-text">{formatKes(leg.amount)}</p>
+              <p className="mt-1 text-xs text-cf-muted">
                 {leg.yieldValue} · {leg.risk} risk
               </p>
             </article>
           ))}
         </div>
       ) : (
-        <p className="text-sm text-wl-muted">{advice.plainAdvice}</p>
+        <p className="text-sm text-cf-muted">{advice.plainAdvice}</p>
       )}
 
       <div className="flex flex-wrap gap-3 text-sm">
-        <Link href="/automation" className="font-semibold text-wl-secondary hover:underline">
+        <Link href="/automation" className="font-semibold text-cf-primary hover:underline">
           Full automation settings →
         </Link>
-        <Link href="/intelligence" className="text-wl-muted hover:text-wl-text hover:underline">
+        <Link href="/intelligence" className="text-cf-muted hover:text-cf-text hover:underline">
           Market intelligence
         </Link>
       </div>

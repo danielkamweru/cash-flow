@@ -17,9 +17,9 @@ const body = Figtree({
 });
 
 export const metadata: Metadata = {
-  title: "Wealth Loop — Financial intelligence for Kenya",
+  title: "Cash-Flow — Understand your money. Control your flow.",
   description:
-    "Turn fragmented Kenyan financial data into actionable intelligence. Understand surplus, plan goals, and orchestrate wealth-building with user authorization.",
+    "A professional personal-finance platform for Kenya. Track income, expenses, savings, and goals with clarity.",
 };
 
 export const viewport: Viewport = {
@@ -31,7 +31,7 @@ export const viewport: Viewport = {
 const themeInitScript = `
 (function() {
   try {
-    var key = 'wealth-loop-theme';
+    var key = 'cash-flow-theme';
     var stored = localStorage.getItem(key);
     var theme = (stored === 'light' || stored === 'dark')
       ? stored
@@ -57,7 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body className="min-h-full bg-wl-bg font-sans text-wl-text transition-colors duration-200">
+      <body className="min-h-full bg-cf-bg font-sans text-cf-text transition-colors duration-200">
         <ThemeProvider>
           <AuthProvider>{children}</AuthProvider>
         </ThemeProvider>

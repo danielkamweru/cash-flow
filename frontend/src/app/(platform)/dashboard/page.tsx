@@ -63,13 +63,13 @@ export default function DashboardPage() {
         actions={
           <div className="flex items-center gap-2">
             <StatusPill status="connected" />
-            <span className="text-xs text-wl-muted">Updated {formatRelative(data.asOf)}</span>
+            <span className="text-xs text-cf-muted">Updated {formatRelative(data.asOf)}</span>
           </div>
         }
       />
 
       {isPersonal && coachError && (
-        <div className="rounded-xl border border-wl-danger/40 bg-wl-danger/10 px-4 py-3 text-sm text-wl-danger">
+        <div className="rounded-xl border border-cf-danger/40 bg-cf-danger/10 px-4 py-3 text-sm text-cf-danger">
           Personal coach could not load: {coachError}. Restart the FastAPI backend on port 4000.
         </div>
       )}
@@ -93,12 +93,12 @@ export default function DashboardPage() {
         <SafeSurplusPanel surplus={data.surplus} />
         <div className="space-y-4">
           <WealthHealthBadge health={data.health} />
-          <div className="wl-card p-4">
-            <p className="text-[11px] uppercase tracking-wide text-wl-muted">Am I getting better?</p>
-            <p className="mt-1 text-sm text-wl-text-secondary">
+          <div className="cf-card p-4">
+            <p className="text-[11px] uppercase tracking-wide text-cf-muted">Am I getting better?</p>
+            <p className="mt-1 text-sm text-cf-text-secondary">
               Wealth Health tracks buffers, debt, savings and goals — not a CRB score.
             </p>
-            <Link href="/wealth-health" className="mt-3 inline-block text-sm text-wl-secondary hover:underline">
+            <Link href="/wealth-health" className="mt-3 inline-block text-sm text-cf-primary hover:underline">
               Open Wealth Health →
             </Link>
           </div>
@@ -112,7 +112,7 @@ export default function DashboardPage() {
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="font-display text-lg font-semibold">Goals</h2>
-            <Link href="/goals" className="text-sm text-wl-secondary hover:underline">
+            <Link href="/goals" className="text-sm text-cf-primary hover:underline">
               View all
             </Link>
           </div>

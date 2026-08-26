@@ -92,6 +92,6 @@ export function calculateWealthHealth(input: {
     factors,
     lastCalculated: input.now ?? new Date().toISOString(),
     disclaimer:
-      "Wealth Loop financial-health indicator. This is not a CRB score, credit bureau report, or loan approval guarantee.",
+      "Cash-Flow financial-health indicator. This is not a CRB score, credit bureau report, or loan approval guarantee.",
   };
 }

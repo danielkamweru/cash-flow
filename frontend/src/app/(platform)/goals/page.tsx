@@ -48,7 +48,7 @@ function FundPanel({ goal, onDone }: { goal: Goal; onDone: () => void }) {
   const [done, setDone] = useState<string | null>(null);
 
   const field =
-    "w-full rounded-xl border border-wl-border bg-wl-surface-2 px-3 py-2.5 text-sm text-wl-text outline-none focus:border-wl-primary/50";
+    "w-full rounded-xl border border-cf-border bg-cf-surface-2 px-3 py-2.5 text-sm text-cf-text outline-none focus:border-cf-primary/50";
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -66,10 +66,10 @@ function FundPanel({ goal, onDone }: { goal: Goal; onDone: () => void }) {
   }
 
   return (
-    <form onSubmit={submit} className="wl-card mt-2 space-y-3 p-5">
+    <form onSubmit={submit} className="cf-card mt-2 space-y-3 p-5">
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="block space-y-1.5 text-sm">
-          <span className="text-xs font-medium uppercase tracking-wide text-wl-muted">From</span>
+          <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">From</span>
           <select value={accountId} onChange={(e) => setAccountId(e.target.value)} className={field}>
             {data.accounts.map((a) => (
               <option key={a.id} value={a.id}>
@@ -79,7 +79,7 @@ function FundPanel({ goal, onDone }: { goal: Goal; onDone: () => void }) {
           </select>
         </label>
         <label className="block space-y-1.5 text-sm">
-          <span className="text-xs font-medium uppercase tracking-wide text-wl-muted">Amount (KES)</span>
+          <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Amount (KES)</span>
           <input
             type="number"
             step="0.01"
@@ -90,12 +90,12 @@ function FundPanel({ goal, onDone }: { goal: Goal; onDone: () => void }) {
           />
         </label>
       </div>
-      {error && <p className="text-sm text-wl-danger">{error}</p>}
-      {done && <p className="text-sm text-wl-success">{done}</p>}
+      {error && <p className="text-sm text-cf-danger">{error}</p>}
+      {done && <p className="text-sm text-cf-success">{done}</p>}
       <button
         type="submit"
         disabled={busy}
-        className="rounded-full bg-gradient-to-r from-wl-primary to-wl-secondary px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+        className="rounded-full bg-gradient-to-r from-cf-primary to-cf-primary-deep px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
       >
         {busy ? "Moving…" : "Add to goal"}
       </button>
@@ -144,11 +144,11 @@ export default function GoalsPage() {
           const pct = g.target > 0 ? Math.min(100, (g.current / g.target) * 100) : 0;
           return (
             <div>
-              <article className="wl-card p-5">
+              <article className="cf-card p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <h3 className="font-display text-lg font-semibold">{g.name}</h3>
-                    <p className="text-xs capitalize text-wl-muted">
+                    <p className="text-xs capitalize text-cf-muted">
                       {g.category} · due {String(g.deadline).slice(0, 10)}
                     </p>
                   </div>
@@ -157,16 +157,16 @@ export default function GoalsPage() {
 
                 <p className="mt-3 font-display text-2xl font-semibold tabular-nums">
                   {formatKes(g.current)}
-                  <span className="text-sm font-normal text-wl-muted"> of {formatKes(g.target)}</span>
+                  <span className="text-sm font-normal text-cf-muted"> of {formatKes(g.target)}</span>
                 </p>
 
-                <div className="mt-3 h-2 overflow-hidden rounded-full bg-[var(--wealth-inset)]">
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-[var(--cf-inset)]">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-wl-primary to-wl-secondary"
+                    className="h-full rounded-full bg-gradient-to-r from-cf-primary to-cf-primary-deep"
                     style={{ width: `${pct}%` }}
                   />
                 </div>
-                <p className="mt-1.5 text-xs text-wl-muted">
+                <p className="mt-1.5 text-xs text-cf-muted">
                   {pct.toFixed(0)}% · {formatKes(g.monthlyContribution)} a month
                 </p>
 
@@ -174,7 +174,7 @@ export default function GoalsPage() {
                   <button
                     type="button"
                     onClick={() => setFunding(funding === g.id ? null : g.id)}
-                    className="mt-3 rounded-full border border-wl-primary/40 px-4 py-1.5 text-xs font-semibold text-wl-text hover:bg-wl-primary/10"
+                    className="mt-3 rounded-full border border-cf-primary/40 px-4 py-1.5 text-xs font-semibold text-cf-text hover:bg-cf-primary/10"
                   >
                     {funding === g.id ? "Close" : "Add money"}
                   </button>

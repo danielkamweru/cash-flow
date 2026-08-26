@@ -50,13 +50,13 @@ export default function AssetsPage() {
           liquidity: String(v.liquidity),
         })}
         renderItem={(a, controls) => (
-          <article className="wl-card flex items-start justify-between gap-3 p-5">
+          <article className="cf-card flex items-start justify-between gap-3 p-5">
             <div className="min-w-0">
               <div className="mb-1 flex flex-wrap items-center gap-2">
                 <h3 className="font-display text-lg font-semibold">{a.name}</h3>
                 <StatusPill status={a.provenance} />
               </div>
-              <p className="text-xs capitalize text-wl-muted">
+              <p className="text-xs capitalize text-cf-muted">
                 {a.category} · {a.liquidity.replaceAll("_", " ")}
               </p>
               <p className="mt-3 font-display text-2xl font-semibold tabular-nums">

@@ -13,7 +13,7 @@ export default function RecommendationsPage() {
         title="Recommendations"
         subtitle="DATA → ANALYSIS → RECOMMENDATION → YOUR DECISION. Never guaranteed returns."
       />
-      <div className="rounded-xl border border-wl-border bg-wl-surface px-4 py-3 text-sm text-wl-muted">
+      <div className="rounded-xl border border-cf-border bg-cf-surface px-4 py-3 text-sm text-cf-muted">
         Recommendations are explainable decision support. Approving an action in demo mode does not
         move real money.
       </div>

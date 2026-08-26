@@ -14,14 +14,14 @@ import { Plus, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 const field =
-  "w-full rounded-xl border border-wl-border bg-wl-surface-2 px-3 py-2.5 text-sm text-wl-text outline-none focus:border-wl-primary/50";
+  "w-full rounded-xl border border-cf-border bg-cf-surface-2 px-3 py-2.5 text-sm text-cf-text outline-none focus:border-cf-primary/50";
 
 type SupplierRow = Supplier & { agreements: BnplAgreement[] };
 
 function trustTone(score: number) {
-  if (score >= 80) return "bg-wl-success/15 text-wl-success";
-  if (score >= 55) return "bg-wl-warning/15 text-wl-warning";
-  return "bg-wl-danger/15 text-wl-danger";
+  if (score >= 80) return "bg-cf-success/15 text-cf-success";
+  if (score >= 55) return "bg-cf-warning/15 text-cf-warning";
+  return "bg-cf-danger/15 text-cf-danger";
 }
 
 function PayPanel({
@@ -66,10 +66,10 @@ function PayPanel({
   }
 
   return (
-    <form onSubmit={submit} className="wl-card mt-2 space-y-3 p-5">
+    <form onSubmit={submit} className="cf-card mt-2 space-y-3 p-5">
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="block space-y-1.5 text-sm">
-          <span className="text-xs font-medium uppercase tracking-wide text-wl-muted">Pay from</span>
+          <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Pay from</span>
           <select value={accountId} onChange={(e) => setAccountId(e.target.value)} className={field}>
             {data.accounts.map((a) => (
               <option key={a.id} value={a.id}>
@@ -79,7 +79,7 @@ function PayPanel({
           </select>
         </label>
         <label className="block space-y-1.5 text-sm">
-          <span className="text-xs font-medium uppercase tracking-wide text-wl-muted">Amount (KES)</span>
+          <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Amount (KES)</span>
           <input
             type="number"
             step="0.01"
@@ -90,7 +90,7 @@ function PayPanel({
           />
         </label>
         <label className="block space-y-1.5 text-sm">
-          <span className="text-xs font-medium uppercase tracking-wide text-wl-muted">LOOP product</span>
+          <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">LOOP product</span>
           <select
             value={channel}
             onChange={(e) => setChannel(e.target.value as "paybill" | "mpesa-till")}
@@ -101,7 +101,7 @@ function PayPanel({
           </select>
         </label>
         <label className="block space-y-1.5 text-sm">
-          <span className="text-xs font-medium uppercase tracking-wide text-wl-muted">
+          <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">
             Account number
           </span>
           <input
@@ -114,24 +114,24 @@ function PayPanel({
       </div>
 
       {active && (
-        <label className="flex items-center gap-2 text-sm text-wl-muted">
+        <label className="flex items-center gap-2 text-sm text-cf-muted">
           <input
             type="checkbox"
             checked={drawBnpl}
             onChange={(e) => setDrawBnpl(e.target.checked)}
-            className="rounded border-wl-border"
+            className="rounded border-cf-border"
           />
           Draw this down against the BNPL agreement ({formatKes(active.balance)} left)
         </label>
       )}
 
-      {error && <p className="text-sm text-wl-danger">{error}</p>}
-      {done && <p className="text-sm text-wl-success">{done}</p>}
+      {error && <p className="text-sm text-cf-danger">{error}</p>}
+      {done && <p className="text-sm text-cf-success">{done}</p>}
 
       <button
         type="submit"
         disabled={busy}
-        className="rounded-full bg-gradient-to-r from-wl-primary to-wl-secondary px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+        className="rounded-full bg-gradient-to-r from-cf-primary to-cf-primary-deep px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
       >
         {busy ? "Paying…" : "Pay supplier"}
       </button>
@@ -191,7 +191,7 @@ export default function SuppliersPage() {
           onClick={() => setAdding((v) => !v)}
           className={cn(
             "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold",
-            adding ? "border-wl-border text-wl-muted" : "border-wl-primary/40 text-wl-text hover:bg-wl-primary/10",
+            adding ? "border-cf-border text-cf-muted" : "border-cf-primary/40 text-cf-text hover:bg-cf-primary/10",
           )}
         >
           {adding ? <X className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
@@ -199,7 +199,7 @@ export default function SuppliersPage() {
         </button>
       </div>
 
-      {error && <p className="text-sm text-wl-danger">{error}</p>}
+      {error && <p className="text-sm text-cf-danger">{error}</p>}
 
       {adding && (
         <form
@@ -211,31 +211,31 @@ export default function SuppliersPage() {
             setAdding(false);
             void load();
           }}
-          className="wl-card grid gap-3 p-5 sm:grid-cols-2"
+          className="cf-card grid gap-3 p-5 sm:grid-cols-2"
         >
           <label className="block space-y-1.5 text-sm">
-            <span className="text-xs font-medium uppercase tracking-wide text-wl-muted">Name</span>
+            <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Name</span>
             <input required value={name} onChange={(e) => setName(e.target.value)} className={field} />
           </label>
           <label className="block space-y-1.5 text-sm">
-            <span className="text-xs font-medium uppercase tracking-wide text-wl-muted">
+            <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">
               Paybill or till
             </span>
             <input value={till} onChange={(e) => setTill(e.target.value)} placeholder="888880" className={field} />
           </label>
           <button
             type="submit"
-            className="rounded-full bg-gradient-to-r from-wl-primary to-wl-secondary px-5 py-2.5 text-sm font-semibold text-white sm:col-span-2 sm:justify-self-start"
+            className="rounded-full bg-gradient-to-r from-cf-primary to-cf-primary-deep px-5 py-2.5 text-sm font-semibold text-white sm:col-span-2 sm:justify-self-start"
           >
             Add supplier
           </button>
         </form>
       )}
 
-      {loading && <p className="text-sm text-wl-muted">Loading…</p>}
+      {loading && <p className="text-sm text-cf-muted">Loading…</p>}
 
       {!loading && rows.length === 0 && (
-        <p className="rounded-xl border border-dashed border-wl-border px-4 py-10 text-center text-sm text-wl-muted">
+        <p className="rounded-xl border border-dashed border-cf-border px-4 py-10 text-center text-sm text-cf-muted">
           No suppliers yet. Add one to pay them straight from here.
         </p>
       )}
@@ -246,7 +246,7 @@ export default function SuppliersPage() {
           const active = s.agreements.filter((a) => a.status === "active");
           return (
             <div key={s.id}>
-              <article className="wl-card p-5">
+              <article className="cf-card p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
@@ -260,7 +260,7 @@ export default function SuppliersPage() {
                         trust {s.trustScore}
                       </span>
                     </div>
-                    <p className="mt-1 text-xs text-wl-muted">
+                    <p className="mt-1 text-xs text-cf-muted">
                       {s.paybillOrTill ? `Paybill/till ${s.paybillOrTill}` : "No till saved"}
                       {history.onTimePayments != null &&
                         ` · ${history.onTimePayments} on time, ${history.latePayments ?? 0} late`}
@@ -270,7 +270,7 @@ export default function SuppliersPage() {
                     <button
                       type="button"
                       onClick={() => setPaying(paying === s.id ? null : s.id)}
-                      className="rounded-full border border-wl-primary/40 px-4 py-1.5 text-xs font-semibold text-wl-text hover:bg-wl-primary/10"
+                      className="rounded-full border border-cf-primary/40 px-4 py-1.5 text-xs font-semibold text-cf-text hover:bg-cf-primary/10"
                     >
                       {paying === s.id ? "Close" : "Pay"}
                     </button>
@@ -281,7 +281,7 @@ export default function SuppliersPage() {
                         await deleteSupplier(entityId, s.id);
                         void load();
                       }}
-                      className="rounded-lg border border-wl-border p-1.5 text-wl-muted hover:text-wl-danger"
+                      className="rounded-lg border border-cf-border p-1.5 text-cf-muted hover:text-cf-danger"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -289,18 +289,18 @@ export default function SuppliersPage() {
                 </div>
 
                 {active.length > 0 && (
-                  <div className="mt-4 space-y-2 rounded-xl border border-wl-border bg-[var(--wealth-inset)] p-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-wl-muted">
+                  <div className="mt-4 space-y-2 rounded-xl border border-cf-border bg-[var(--cf-inset)] p-4">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-cf-muted">
                       Buy-now-pay-later
                     </p>
                     {active.map((a) => (
                       <div key={a.id}>
-                        <p className="text-sm text-wl-text">
+                        <p className="text-sm text-cf-text">
                           {formatKes(a.balance)} outstanding of {formatKes(a.principal)}
                         </p>
                         <ul className="mt-1.5 space-y-1">
                           {a.installments.map((inst, idx) => (
-                            <li key={idx} className="flex justify-between text-xs text-wl-muted">
+                            <li key={idx} className="flex justify-between text-xs text-cf-muted">
                               <span>{inst.dueDate}</span>
                               <span className="tabular-nums">
                                 {formatKes(inst.amount)} · {inst.status}

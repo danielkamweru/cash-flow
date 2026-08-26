@@ -7,7 +7,7 @@ databases:
 
 services:
   - type: web
-    name: wealth-loop-api
+    name: cash-flow-api
     runtime: python
     plan: free
     rootDir: backend

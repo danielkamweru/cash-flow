@@ -15,6 +15,6 @@ export default function PersonalWealthPage() {
   }, [setEntityType, router]);
 
   return (
-    <p className="text-sm text-wl-muted">Switching to Personal wealth…</p>
+    <p className="text-sm text-cf-muted">Switching to Personal wealth…</p>
   );
 }

@@ -78,23 +78,23 @@ export default function BillsPage() {
           const late = !paid && days < 0;
           const soon = !paid && days >= 0 && days <= 7;
           return (
-            <article className="wl-card flex items-start justify-between gap-3 p-5">
+            <article className="cf-card flex items-start justify-between gap-3 p-5">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="font-display text-base font-semibold">{b.name}</h3>
                   <span
                     className={cn(
                       "rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-                      paid && "bg-wl-success/15 text-wl-success",
-                      late && "bg-wl-danger/15 text-wl-danger",
-                      soon && "bg-wl-warning/15 text-wl-warning",
-                      !paid && !late && !soon && "bg-wl-primary/10 text-wl-secondary",
+                      paid && "bg-cf-success/15 text-cf-success",
+                      late && "bg-cf-danger/15 text-cf-danger",
+                      soon && "bg-cf-warning/15 text-cf-warning",
+                      !paid && !late && !soon && "bg-cf-primary/10 text-cf-primary",
                     )}
                   >
                     {paid ? "Paid" : late ? `${Math.abs(days)}d overdue` : `in ${days}d`}
                   </span>
                 </div>
-                <p className="mt-1 text-xs text-wl-muted">
+                <p className="mt-1 text-xs text-cf-muted">
                   {b.category} · due {b.dueDate.slice(0, 10)}
                 </p>
                 <p className={cn("mt-2 font-display text-xl font-semibold tabular-nums", paid && "opacity-60")}>
@@ -107,7 +107,7 @@ export default function BillsPage() {
                       await obligationsApi.update(b.entityId, b.id, { status: "paid" });
                       refresh();
                     }}
-                    className="mt-3 rounded-full border border-wl-border px-4 py-1.5 text-xs font-semibold text-wl-muted hover:text-wl-text"
+                    className="mt-3 rounded-full border border-cf-border px-4 py-1.5 text-xs font-semibold text-cf-muted hover:text-cf-text"
                   >
                     Mark paid
                   </button>

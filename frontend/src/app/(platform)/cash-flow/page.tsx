@@ -29,13 +29,13 @@ export default function CashFlowPage() {
         />
       </div>
       <CashFlowChart series={data.cashflow} />
-      <div className="wl-card grid gap-4 p-5 sm:grid-cols-2">
+      <div className="cf-card grid gap-4 p-5 sm:grid-cols-2">
         <div>
-          <p className="text-xs text-wl-muted">Average monthly inflow</p>
+          <p className="text-xs text-cf-muted">Average monthly inflow</p>
           <p className="font-display text-xl font-semibold">{formatKes(avgIn)}</p>
         </div>
         <div>
-          <p className="text-xs text-wl-muted">Average monthly outflow</p>
+          <p className="text-xs text-cf-muted">Average monthly outflow</p>
           <p className="font-display text-xl font-semibold">{formatKes(avgOut)}</p>
         </div>
       </div>

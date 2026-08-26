@@ -52,9 +52,9 @@ const PRESETS: { label: string; range: () => [string, string] }[] = [
 ];
 
 function statusTone(status?: string): string {
-  if (status === "pending") return "text-wl-warning";
-  if (status === "failed") return "text-wl-danger";
-  return "text-wl-muted";
+  if (status === "pending") return "text-cf-warning";
+  if (status === "failed") return "text-cf-danger";
+  return "text-cf-muted";
 }
 
 export default function TransactionsPage() {
@@ -138,26 +138,26 @@ export default function TransactionsPage() {
         subtitle="Inflows and outflows power cash-flow analysis and surplus detection."
       />
 
-      <section className="wl-card space-y-4 p-5">
+      <section className="cf-card space-y-4 p-5">
         <div className="flex flex-wrap items-end gap-3">
           <label className="space-y-1.5 text-sm">
-            <span className="block text-xs font-medium uppercase tracking-wide text-wl-muted">From</span>
+            <span className="block text-xs font-medium uppercase tracking-wide text-cf-muted">From</span>
             <input
               type="date"
               value={start}
               max={end || undefined}
               onChange={(e) => setStart(e.target.value)}
-              className="rounded-xl border border-wl-border bg-wl-surface-2 px-3 py-2 text-sm text-wl-text outline-none focus:border-wl-primary/50"
+              className="rounded-xl border border-cf-border bg-cf-surface-2 px-3 py-2 text-sm text-cf-text outline-none focus:border-cf-primary/50"
             />
           </label>
           <label className="space-y-1.5 text-sm">
-            <span className="block text-xs font-medium uppercase tracking-wide text-wl-muted">To</span>
+            <span className="block text-xs font-medium uppercase tracking-wide text-cf-muted">To</span>
             <input
               type="date"
               value={end}
               min={start || undefined}
               onChange={(e) => setEnd(e.target.value)}
-              className="rounded-xl border border-wl-border bg-wl-surface-2 px-3 py-2 text-sm text-wl-text outline-none focus:border-wl-primary/50"
+              className="rounded-xl border border-cf-border bg-cf-surface-2 px-3 py-2 text-sm text-cf-text outline-none focus:border-cf-primary/50"
             />
           </label>
 
@@ -171,7 +171,7 @@ export default function TransactionsPage() {
                   setStart(s);
                   setEnd(e);
                 }}
-                className="rounded-full border border-wl-border px-3 py-1.5 text-xs font-medium text-wl-muted transition-colors hover:border-wl-primary/40 hover:text-wl-text"
+                className="rounded-full border border-cf-border px-3 py-1.5 text-xs font-medium text-cf-muted transition-colors hover:border-cf-primary/40 hover:text-cf-text"
               >
                 {p.label}
               </button>
@@ -182,7 +182,7 @@ export default function TransactionsPage() {
                 setStart("");
                 setEnd("");
               }}
-              className="rounded-full border border-wl-border px-3 py-1.5 text-xs font-medium text-wl-muted transition-colors hover:border-wl-primary/40 hover:text-wl-text"
+              className="rounded-full border border-cf-border px-3 py-1.5 text-xs font-medium text-cf-muted transition-colors hover:border-cf-primary/40 hover:text-cf-text"
             >
               All time
             </button>
@@ -193,12 +193,12 @@ export default function TransactionsPage() {
               type="button"
               onClick={() => void onExport("xlsx")}
               disabled={exporting !== null}
-              className="inline-flex items-center gap-2 rounded-full border border-wl-border px-4 py-2 text-xs font-semibold text-wl-text transition-colors hover:border-wl-primary/40 disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-full border border-cf-border px-4 py-2 text-xs font-semibold text-cf-text transition-colors hover:border-cf-primary/40 disabled:opacity-60"
             >
               {exporting === "xlsx" ? (
                 <Download className="h-3.5 w-3.5 animate-pulse" />
               ) : (
-                <FileSpreadsheet className="h-3.5 w-3.5 text-wl-success" />
+                <FileSpreadsheet className="h-3.5 w-3.5 text-cf-success" />
               )}
               Excel
             </button>
@@ -206,12 +206,12 @@ export default function TransactionsPage() {
               type="button"
               onClick={() => void onExport("pdf")}
               disabled={exporting !== null}
-              className="inline-flex items-center gap-2 rounded-full border border-wl-border px-4 py-2 text-xs font-semibold text-wl-text transition-colors hover:border-wl-primary/40 disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-full border border-cf-border px-4 py-2 text-xs font-semibold text-cf-text transition-colors hover:border-cf-primary/40 disabled:opacity-60"
             >
               {exporting === "pdf" ? (
                 <Download className="h-3.5 w-3.5 animate-pulse" />
               ) : (
-                <FileText className="h-3.5 w-3.5 text-wl-danger" />
+                <FileText className="h-3.5 w-3.5 text-cf-danger" />
               )}
               PDF
             </button>
@@ -221,25 +221,25 @@ export default function TransactionsPage() {
         <div className="grid gap-3 sm:grid-cols-3">
           {(
             [
-              ["Inflow", totals.inflow, "text-wl-success"],
-              ["Outflow", totals.outflow, "text-wl-text"],
-              ["Net", totals.net, totals.net >= 0 ? "text-wl-success" : "text-wl-danger"],
+              ["Inflow", totals.inflow, "text-cf-success"],
+              ["Outflow", totals.outflow, "text-cf-text"],
+              ["Net", totals.net, totals.net >= 0 ? "text-cf-success" : "text-cf-danger"],
             ] as const
           ).map(([label, value, tone]) => (
-            <div key={label} className="rounded-xl border border-wl-border bg-[var(--wealth-inset)] px-4 py-3">
-              <p className="text-[10px] uppercase tracking-[0.14em] text-wl-muted">{label}</p>
+            <div key={label} className="rounded-xl border border-cf-border bg-[var(--cf-inset)] px-4 py-3">
+              <p className="text-[10px] uppercase tracking-[0.14em] text-cf-muted">{label}</p>
               <p className={cn("font-display text-lg font-semibold tabular-nums", tone)}>{formatKes(value)}</p>
             </div>
           ))}
         </div>
 
-        {error && <p className="text-sm text-wl-danger">{error}</p>}
+        {error && <p className="text-sm text-cf-danger">{error}</p>}
       </section>
 
-      <div className="wl-card overflow-hidden">
+      <div className="cf-card overflow-hidden">
         <div className="scrollbar-thin overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-sm">
-            <thead className="border-b border-wl-border bg-wl-surface-2/50 text-[11px] uppercase tracking-wide text-wl-muted">
+            <thead className="border-b border-cf-border bg-cf-surface-2/50 text-[11px] uppercase tracking-wide text-cf-muted">
               <tr>
                 <th className="px-3 py-3 font-medium sm:px-4">Date</th>
                 <th className="px-3 py-3 font-medium sm:px-4">Description</th>
@@ -251,7 +251,7 @@ export default function TransactionsPage() {
             <tbody>
               {loading && (
                 <tr>
-                  <td colSpan={5} className="px-3 py-8 sm:px-4 text-center text-wl-muted">
+                  <td colSpan={5} className="px-3 py-8 sm:px-4 text-center text-cf-muted">
                     Loading…
                   </td>
                 </tr>
@@ -259,7 +259,7 @@ export default function TransactionsPage() {
 
               {!loading && rows.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-3 py-10 sm:px-4 text-center text-wl-muted">
+                  <td colSpan={5} className="px-3 py-10 sm:px-4 text-center text-cf-muted">
                     No transactions in this period.
                   </td>
                 </tr>
@@ -267,15 +267,15 @@ export default function TransactionsPage() {
 
               {!loading &&
                 rows.map((t) => (
-                  <tr key={t.id} className="border-b border-wl-border/70">
-                    <td className="whitespace-nowrap px-3 py-3 text-wl-muted sm:px-4">{formatDate(t.date)}</td>
+                  <tr key={t.id} className="border-b border-cf-border/70">
+                    <td className="whitespace-nowrap px-3 py-3 text-cf-muted sm:px-4">{formatDate(t.date)}</td>
                     <td className="px-3 py-3 sm:px-4">
-                      <p className="max-w-[220px] truncate text-wl-text sm:max-w-none sm:whitespace-normal">
+                      <p className="max-w-[220px] truncate text-cf-text sm:max-w-none sm:whitespace-normal">
                         {t.description}
                       </p>
                       <StatusPill status={t.provenance} />
                     </td>
-                    <td className="px-3 py-3 text-wl-muted sm:px-4">{t.category}</td>
+                    <td className="px-3 py-3 text-cf-muted sm:px-4">{t.category}</td>
                     <td className="px-3 py-3 sm:px-4">
                       <span className={cn("text-xs font-medium capitalize", statusTone(t.status))}>
                         {t.status ?? "completed"}
@@ -285,7 +285,7 @@ export default function TransactionsPage() {
                           type="button"
                           onClick={() => void onCheckStatus(t.loopTxnReference!)}
                           disabled={checking === t.loopTxnReference}
-                          className="ml-2 inline-flex items-center gap-1 rounded-full border border-wl-border px-2 py-0.5 text-[10px] font-semibold text-wl-muted hover:text-wl-text disabled:opacity-60"
+                          className="ml-2 inline-flex items-center gap-1 rounded-full border border-cf-border px-2 py-0.5 text-[10px] font-semibold text-cf-muted hover:text-cf-text disabled:opacity-60"
                         >
                           <RefreshCw
                             className={cn("h-3 w-3", checking === t.loopTxnReference && "animate-spin")}
@@ -297,7 +297,7 @@ export default function TransactionsPage() {
                     <td
                       className={cn(
                         "whitespace-nowrap px-3 py-3 text-right font-medium tabular-nums sm:px-4",
-                        t.type === "inflow" ? "text-wl-success" : "text-wl-text",
+                        t.type === "inflow" ? "text-cf-success" : "text-cf-text",
                         t.status === "failed" && "line-through opacity-60",
                       )}
                     >

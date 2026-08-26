@@ -24,11 +24,11 @@ import {
 import { useCallback, useEffect, useState } from "react";
 
 const SEVERITY: Record<AdvisorSeverity, { label: string; chip: string; Icon: typeof Info }> = {
-  critical: { label: "Critical", chip: "bg-wl-danger/15 text-wl-danger", Icon: ShieldAlert },
-  high: { label: "High", chip: "bg-wl-danger/10 text-wl-danger", Icon: AlertTriangle },
-  medium: { label: "Medium", chip: "bg-wl-warning/15 text-wl-warning", Icon: AlertTriangle },
-  low: { label: "Low", chip: "bg-wl-primary/10 text-wl-secondary", Icon: Info },
-  info: { label: "Insight", chip: "bg-wl-success/12 text-wl-success", Icon: Info },
+  critical: { label: "Critical", chip: "bg-cf-danger/15 text-cf-danger", Icon: ShieldAlert },
+  high: { label: "High", chip: "bg-cf-danger/10 text-cf-danger", Icon: AlertTriangle },
+  medium: { label: "Medium", chip: "bg-cf-warning/15 text-cf-warning", Icon: AlertTriangle },
+  low: { label: "Low", chip: "bg-cf-primary/10 text-cf-primary", Icon: Info },
+  info: { label: "Insight", chip: "bg-cf-success/12 text-cf-success", Icon: Info },
 };
 
 const AGENT_NAMES: Record<string, string> = {
@@ -52,7 +52,7 @@ function FindingCard({ finding }: { finding: AdvisorFinding }) {
   const { Icon } = meta;
 
   return (
-    <article className="wl-card overflow-hidden">
+    <article className="cf-card overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -63,31 +63,31 @@ function FindingCard({ finding }: { finding: AdvisorFinding }) {
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-2">
-            <span className="font-display text-base font-semibold text-wl-text">{finding.title}</span>
+            <span className="font-display text-base font-semibold text-cf-text">{finding.title}</span>
             <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide", meta.chip)}>
               {meta.label}
             </span>
-            <span className="text-[10px] uppercase tracking-[0.14em] text-wl-muted">
+            <span className="text-[10px] uppercase tracking-[0.14em] text-cf-muted">
               {AGENT_NAMES[finding.agent] ?? finding.agent}
             </span>
           </span>
-          <span className="mt-1.5 block text-sm text-wl-muted">{finding.detail}</span>
+          <span className="mt-1.5 block text-sm text-cf-muted">{finding.detail}</span>
         </span>
         {finding.evidence.length > 0 && (
           <ChevronDown
-            className={cn("mt-1 h-4 w-4 shrink-0 text-wl-muted transition-transform", open && "rotate-180")}
+            className={cn("mt-1 h-4 w-4 shrink-0 text-cf-muted transition-transform", open && "rotate-180")}
           />
         )}
       </button>
 
       {open && finding.evidence.length > 0 && (
-        <div className="border-t border-wl-border bg-[var(--wealth-inset)] px-5 py-4">
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-wl-muted">
+        <div className="border-t border-cf-border bg-[var(--cf-inset)] px-5 py-4">
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-cf-muted">
             What this is based on
           </p>
           <ul className="space-y-1">
             {finding.evidence.map((e) => (
-              <li key={e} className="text-sm tabular-nums text-wl-text-secondary">
+              <li key={e} className="text-sm tabular-nums text-cf-text-secondary">
                 {e}
               </li>
             ))}
@@ -125,7 +125,7 @@ function ExecutePanel({
   if (!kind) return null;
 
   const field =
-    "w-full rounded-xl border border-wl-border bg-wl-surface-2 px-3 py-2.5 text-sm text-wl-text outline-none focus:border-wl-primary/50";
+    "w-full rounded-xl border border-cf-border bg-cf-surface-2 px-3 py-2.5 text-sm text-cf-text outline-none focus:border-cf-primary/50";
 
   async function run(e: React.FormEvent) {
     e.preventDefault();
@@ -157,10 +157,10 @@ function ExecutePanel({
   }
 
   return (
-    <form onSubmit={run} className="mt-4 space-y-3 rounded-xl border border-wl-border bg-[var(--wealth-inset)] p-4">
+    <form onSubmit={run} className="mt-4 space-y-3 rounded-xl border border-cf-border bg-[var(--cf-inset)] p-4">
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="block space-y-1.5 text-sm">
-          <span className="text-xs font-medium uppercase tracking-wide text-wl-muted">From</span>
+          <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">From</span>
           <select value={accountId} onChange={(e) => setAccountId(e.target.value)} className={field}>
             {accounts.map((a) => (
               <option key={a.id} value={a.id}>
@@ -170,7 +170,7 @@ function ExecutePanel({
           </select>
         </label>
         <label className="block space-y-1.5 text-sm">
-          <span className="text-xs font-medium uppercase tracking-wide text-wl-muted">Amount (KES)</span>
+          <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Amount (KES)</span>
           <input
             type="number"
             step="0.01"
@@ -182,13 +182,13 @@ function ExecutePanel({
         </label>
       </div>
 
-      {error && <p className="text-sm text-wl-danger">{error}</p>}
-      {done && <p className="text-sm text-wl-success">{done}</p>}
+      {error && <p className="text-sm text-cf-danger">{error}</p>}
+      {done && <p className="text-sm text-cf-success">{done}</p>}
 
       <button
         type="submit"
         disabled={busy || !accountId}
-        className="rounded-full bg-gradient-to-r from-wl-primary to-wl-secondary px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+        className="rounded-full bg-gradient-to-r from-cf-primary to-cf-primary-deep px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
       >
         {busy
           ? "Working…"
@@ -239,7 +239,7 @@ export default function AdvisorPage() {
             type="button"
             onClick={() => void load()}
             disabled={loading}
-            className="inline-flex items-center gap-2 rounded-full border border-wl-border px-4 py-2 text-xs font-semibold text-wl-text hover:border-wl-primary/40 disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-full border border-cf-border px-4 py-2 text-xs font-semibold text-cf-text hover:border-cf-primary/40 disabled:opacity-60"
           >
             <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
             Re-analyse
@@ -248,7 +248,7 @@ export default function AdvisorPage() {
       />
 
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs uppercase tracking-wide text-wl-muted">History analysed</span>
+        <span className="text-xs uppercase tracking-wide text-cf-muted">History analysed</span>
         {RANGES.map((r) => (
           <button
             key={r.months}
@@ -257,8 +257,8 @@ export default function AdvisorPage() {
             className={cn(
               "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
               months === r.months
-                ? "border-wl-primary/50 bg-wl-primary/10 text-wl-text"
-                : "border-wl-border text-wl-muted hover:text-wl-text",
+                ? "border-cf-primary/50 bg-cf-primary/10 text-cf-text"
+                : "border-cf-border text-cf-muted hover:text-cf-text",
             )}
           >
             {r.label}
@@ -267,40 +267,40 @@ export default function AdvisorPage() {
       </div>
 
       {error && (
-        <div className="rounded-xl border border-wl-danger/40 bg-wl-danger/10 px-4 py-3 text-sm text-wl-danger">
+        <div className="rounded-xl border border-cf-danger/40 bg-cf-danger/10 px-4 py-3 text-sm text-cf-danger">
           {error}
         </div>
       )}
 
       {loading && !report && (
-        <div className="wl-card p-10 text-center text-sm text-wl-muted">Agents are reading your books…</div>
+        <div className="cf-card p-10 text-center text-sm text-cf-muted">Agents are reading your books…</div>
       )}
 
       {report && (
         <>
-          <section className="wl-card space-y-4 p-6">
+          <section className="cf-card space-y-4 p-6">
             <div className="flex items-start gap-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-wl-primary to-wl-secondary">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-cf-primary to-cf-primary-deep">
                 <Brain className="h-5 w-5 text-white" />
               </span>
               <div className="min-w-0">
-                <h2 className="font-display text-xl font-semibold text-wl-text">{report.headline}</h2>
-                <p className="mt-1.5 text-sm text-wl-muted">{report.summary}</p>
+                <h2 className="font-display text-xl font-semibold text-cf-text">{report.headline}</h2>
+                <p className="mt-1.5 text-sm text-cf-muted">{report.summary}</p>
               </div>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {(
                 [
-                  ["Monthly income", report.metrics.monthlyIncome, "text-wl-success"],
-                  ["Monthly spending", report.metrics.monthlyExpenses, "text-wl-text"],
+                  ["Monthly income", report.metrics.monthlyIncome, "text-cf-success"],
+                  ["Monthly spending", report.metrics.monthlyExpenses, "text-cf-text"],
                   ["Monthly surplus", report.metrics.monthlySurplus,
-                    report.metrics.monthlySurplus >= 0 ? "text-wl-success" : "text-wl-danger"],
-                  ["Emergency cover", report.metrics.emergencyCover, "text-wl-text"],
+                    report.metrics.monthlySurplus >= 0 ? "text-cf-success" : "text-cf-danger"],
+                  ["Emergency cover", report.metrics.emergencyCover, "text-cf-text"],
                 ] as const
               ).map(([label, value, tone]) => (
-                <div key={label} className="rounded-xl border border-wl-border bg-[var(--wealth-inset)] px-4 py-3">
-                  <p className="text-[10px] uppercase tracking-[0.14em] text-wl-muted">{label}</p>
+                <div key={label} className="rounded-xl border border-cf-border bg-[var(--cf-inset)] px-4 py-3">
+                  <p className="text-[10px] uppercase tracking-[0.14em] text-cf-muted">{label}</p>
                   <p className={cn("font-display text-lg font-semibold tabular-nums", tone)}>
                     {formatKes(value)}
                   </p>
@@ -308,7 +308,7 @@ export default function AdvisorPage() {
               ))}
             </div>
 
-            <p className="text-xs text-wl-muted">
+            <p className="text-xs text-cf-muted">
               {report.agents.length} agents · {report.metrics.transactionsAnalysed} transactions over{" "}
               {report.metrics.monthsAnalysed} months
             </p>
@@ -317,32 +317,32 @@ export default function AdvisorPage() {
           {report.actions.length > 0 && (
             <section className="space-y-3">
               <div className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-wl-secondary" />
+                <TrendingUp className="h-4 w-4 text-cf-primary" />
                 <h2 className="font-display text-xl font-semibold">Your plan, in order</h2>
               </div>
-              <p className="text-sm text-wl-muted">
+              <p className="text-sm text-cf-muted">
                 Work down the list. Each step says what it costs and where the money should sit.
               </p>
 
               <ol className="space-y-3">
                 {report.actions.map((a, i) => (
-                  <li key={`${a.title}-${i}`} className="wl-card p-5">
+                  <li key={`${a.title}-${i}`} className="cf-card p-5">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="flex min-w-0 items-start gap-3">
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-wl-primary/10 text-xs font-semibold text-wl-secondary">
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-cf-primary/10 text-xs font-semibold text-cf-primary">
                           {i + 1}
                         </span>
                         <div className="min-w-0">
-                          <p className="font-display text-base font-semibold text-wl-text">{a.title}</p>
-                          <p className="mt-1 text-sm text-wl-muted">{a.rationale}</p>
+                          <p className="font-display text-base font-semibold text-cf-text">{a.title}</p>
+                          <p className="mt-1 text-sm text-cf-muted">{a.rationale}</p>
                         </div>
                       </div>
                       {a.amount != null && (
                         <div className="text-right">
-                          <p className="font-display text-lg font-semibold tabular-nums text-wl-text">
+                          <p className="font-display text-lg font-semibold tabular-nums text-cf-text">
                             {formatKes(a.amount)}
                           </p>
-                          {a.cadence && <p className="text-xs text-wl-muted">{a.cadence}</p>}
+                          {a.cadence && <p className="text-xs text-cf-muted">{a.cadence}</p>}
                         </div>
                       )}
                     </div>
@@ -350,18 +350,18 @@ export default function AdvisorPage() {
                     {(a.instrumentLabel || a.risk || a.liquidity) && (
                       <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
                         {a.instrumentLabel && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-wl-primary/10 px-3 py-1 font-medium text-wl-secondary">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-cf-primary/10 px-3 py-1 font-medium text-cf-primary">
                             <ArrowRight className="h-3 w-3" />
                             {a.instrumentLabel}
                           </span>
                         )}
                         {a.risk && (
-                          <span className="rounded-full border border-wl-border px-3 py-1 capitalize text-wl-muted">
+                          <span className="rounded-full border border-cf-border px-3 py-1 capitalize text-cf-muted">
                             {a.risk} risk
                           </span>
                         )}
                         {a.liquidity && (
-                          <span className="rounded-full border border-wl-border px-3 py-1 text-wl-muted">
+                          <span className="rounded-full border border-cf-border px-3 py-1 text-cf-muted">
                             {a.liquidity}
                           </span>
                         )}
@@ -372,16 +372,16 @@ export default function AdvisorPage() {
                       <button
                         type="button"
                         onClick={() => setOpenAction(openAction === i ? null : i)}
-                        className="rounded-full border border-wl-primary/40 px-4 py-1.5 text-xs font-semibold text-wl-text hover:bg-wl-primary/10"
+                        className="rounded-full border border-cf-primary/40 px-4 py-1.5 text-xs font-semibold text-cf-text hover:bg-cf-primary/10"
                       >
                         {openAction === i ? "Close" : "Do this"}
                       </button>
                       {a.assumptions.length > 0 && (
                         <details>
-                          <summary className="cursor-pointer text-xs text-wl-muted hover:text-wl-text">
+                          <summary className="cursor-pointer text-xs text-cf-muted hover:text-cf-text">
                             Assumptions
                           </summary>
-                          <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-wl-muted">
+                          <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-cf-muted">
                             {a.assumptions.map((s) => (
                               <li key={s}>{s}</li>
                             ))}
@@ -414,7 +414,7 @@ export default function AdvisorPage() {
             </div>
           </section>
 
-          <p className="rounded-xl border border-wl-border bg-wl-surface px-4 py-3 text-xs text-wl-muted">
+          <p className="rounded-xl border border-cf-border bg-cf-surface px-4 py-3 text-xs text-cf-muted">
             {report.disclaimer}
           </p>
         </>

@@ -2,104 +2,100 @@
 
 :root,
 :root[data-theme="dark"] {
-  /* Wealth Loop — coral/ember identity (from visual reference direction) */
-  --wealth-primary: #e23d2a;
-  --wealth-primary-deep: #b92d1f;
-  --wealth-secondary: #f07a3a;
-  --wealth-ember: #ffb347;
+  --cf-primary: #00A651;
+  --cf-primary-hover: #008c44;
+  --cf-primary-deep: #007A3D;
+  --cf-primary-light: #E8F7EF;
+  --cf-secondary: #1F2937;
+  --cf-accent: #00A651;
 
-  /* NCPA institutional accents — insert official values when brand assets are available */
-  --ncpa-primary: var(--ncpa-primary-pending, #1a3a5c);
-  --ncpa-secondary: var(--ncpa-secondary-pending, #c4a35a);
-  --ncpa-note: "Official NCPA hex values pending brand assets";
+  --cf-background: #0c0d10;
+  --cf-background-elevated: #12141a;
+  --cf-surface: #171a21;
+  --cf-surface-2: #1e222b;
+  --cf-border: rgba(255, 255, 255, 0.08);
+  --cf-border-strong: rgba(255, 255, 255, 0.14);
 
-  --wealth-background: #0c0d10;
-  --wealth-background-elevated: #12141a;
-  --wealth-surface: #171a21;
-  --wealth-surface-2: #1e222b;
-  --wealth-border: rgba(255, 255, 255, 0.08);
-  --wealth-border-strong: rgba(255, 255, 255, 0.14);
+  --cf-text: #f5f3ef;
+  --cf-text-secondary: #c8c4bc;
+  --cf-muted: #8b8790;
 
-  --wealth-text: #f5f3ef;
-  --wealth-text-secondary: #c8c4bc;
-  --wealth-muted: #8b8790;
+  --cf-success: #2f9e6b;
+  --cf-warning: #d4a017;
+  --cf-danger: #d64545;
+  --cf-info: #3d7ea6;
 
-  --wealth-success: #2f9e6b;
-  --wealth-warning: #d4a017;
-  --wealth-danger: #d64545;
-  --wealth-info: #3d7ea6;
+  --cf-radius: 16px;
+  --cf-radius-sm: 10px;
+  --cf-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+  --cf-overlay: rgba(0, 0, 0, 0.6);
+  --cf-grid-line: rgba(255, 255, 255, 0.03);
+  --cf-inset: rgba(0, 0, 0, 0.2);
+  --cf-contrast-surface: #f7f4ef;
+  --cf-contrast-text: #16141a;
+  --cf-scrollbar: rgba(255, 255, 255, 0.12);
 
-  --wealth-radius: 16px;
-  --wealth-radius-sm: 10px;
-  --wealth-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
-  --wealth-overlay: rgba(0, 0, 0, 0.6);
-  --wealth-grid-line: rgba(255, 255, 255, 0.03);
-  --wealth-inset: rgba(0, 0, 0, 0.2);
-  --wealth-contrast-surface: #f7f4ef;
-  --wealth-contrast-text: #16141a;
-  --wealth-scrollbar: rgba(255, 255, 255, 0.12);
-
-  --background: var(--wealth-background);
-  --foreground: var(--wealth-text);
+  --background: var(--cf-background);
+  --foreground: var(--cf-text);
 }
 
 :root[data-theme="light"] {
-  --wealth-primary: #d63524;
-  --wealth-primary-deep: #b92d1f;
-  --wealth-secondary: #e56a28;
-  --wealth-ember: #f59a3a;
+  --cf-primary: #00A651;
+  --cf-primary-hover: #008c44;
+  --cf-primary-deep: #007A3D;
+  --cf-primary-light: #E8F7EF;
+  --cf-secondary: #6B7280;
+  --cf-accent: #00A651;
 
-  --ncpa-primary: var(--ncpa-primary-pending, #1a3a5c);
-  --ncpa-secondary: var(--ncpa-secondary-pending, #a8873f);
+  --cf-background: #F8FAF9;
+  --cf-background-elevated: #ffffff;
+  --cf-surface: #ffffff;
+  --cf-surface-2: #f3f6f4;
+  --cf-border: rgba(0, 0, 0, 0.08);
+  --cf-border-strong: rgba(0, 0, 0, 0.14);
 
-  --wealth-background: #f4f1ec;
-  --wealth-background-elevated: #ffffff;
-  --wealth-surface: #ffffff;
-  --wealth-surface-2: #f8f5f1;
-  --wealth-border: rgba(22, 20, 26, 0.1);
-  --wealth-border-strong: rgba(22, 20, 26, 0.16);
+  --cf-text: #1F2937;
+  --cf-text-secondary: #4b5563;
+  --cf-muted: #6B7280;
 
-  --wealth-text: #16141a;
-  --wealth-text-secondary: #3f3a45;
-  --wealth-muted: #6f6975;
+  --cf-success: #1f8a5b;
+  --cf-warning: #b8860b;
+  --cf-danger: #c53a3a;
+  --cf-info: #2f6f95;
 
-  --wealth-success: #1f8a5b;
-  --wealth-warning: #b8860b;
-  --wealth-danger: #c53a3a;
-  --wealth-info: #2f6f95;
+  --cf-shadow: 0 14px 40px rgba(0, 0, 0, 0.06);
+  --cf-overlay: rgba(0, 0, 0, 0.45);
+  --cf-grid-line: rgba(0, 0, 0, 0.04);
+  --cf-inset: rgba(0, 0, 0, 0.03);
+  --cf-contrast-surface: #171a21;
+  --cf-contrast-text: #f5f3ef;
+  --cf-scrollbar: rgba(0, 0, 0, 0.18);
 
-  --wealth-shadow: 0 14px 40px rgba(22, 20, 26, 0.08);
-  --wealth-overlay: rgba(22, 20, 26, 0.45);
-  --wealth-grid-line: rgba(22, 20, 26, 0.05);
-  --wealth-inset: rgba(22, 20, 26, 0.04);
-  --wealth-contrast-surface: #171a21;
-  --wealth-contrast-text: #f5f3ef;
-  --wealth-scrollbar: rgba(22, 20, 26, 0.18);
-
-  --background: var(--wealth-background);
-  --foreground: var(--wealth-text);
+  --background: var(--cf-background);
+  --foreground: var(--cf-text);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-wl-primary: var(--wealth-primary);
-  --color-wl-secondary: var(--wealth-secondary);
-  --color-wl-ember: var(--wealth-ember);
-  --color-wl-bg: var(--wealth-background);
-  --color-wl-elevated: var(--wealth-background-elevated);
-  --color-wl-surface: var(--wealth-surface);
-  --color-wl-surface-2: var(--wealth-surface-2);
-  --color-wl-border: var(--wealth-border);
-  --color-wl-text: var(--wealth-text);
-  --color-wl-text-secondary: var(--wealth-text-secondary);
-  --color-wl-muted: var(--wealth-muted);
-  --color-wl-success: var(--wealth-success);
-  --color-wl-warning: var(--wealth-warning);
-  --color-wl-danger: var(--wealth-danger);
-  --color-wl-info: var(--wealth-info);
-  --color-ncpa-primary: var(--ncpa-primary);
-  --color-ncpa-secondary: var(--ncpa-secondary);
+  --color-cf-primary: var(--cf-primary);
+  --color-cf-primary-hover: var(--cf-primary-hover);
+  --color-cf-primary-deep: var(--cf-primary-deep);
+  --color-cf-primary-light: var(--cf-primary-light);
+  --color-cf-secondary: var(--cf-secondary);
+  --color-cf-accent: var(--cf-accent);
+  --color-cf-bg: var(--cf-background);
+  --color-cf-elevated: var(--cf-background-elevated);
+  --color-cf-surface: var(--cf-surface);
+  --color-cf-surface-2: var(--cf-surface-2);
+  --color-cf-border: var(--cf-border);
+  --color-cf-text: var(--cf-text);
+  --color-cf-text-secondary: var(--cf-text-secondary);
+  --color-cf-muted: var(--cf-muted);
+  --color-cf-success: var(--cf-success);
+  --color-cf-warning: var(--cf-warning);
+  --color-cf-danger: var(--cf-danger);
+  --color-cf-info: var(--cf-info);
   --font-sans: var(--font-body);
   --font-display: var(--font-display);
 }
@@ -115,8 +111,8 @@ html {
 }
 
 body {
-  background: var(--wealth-background);
-  color: var(--wealth-text);
+  background: var(--cf-background);
+  color: var(--cf-text);
   font-family: var(--font-body), system-ui, sans-serif;
   min-height: 100vh;
   min-height: 100dvh;
@@ -138,53 +134,53 @@ code {
   word-break: break-word;
 }
 
-.wl-break {
+.cf-break {
   overflow-wrap: anywhere;
   word-break: break-word;
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--wealth-primary) 40%, transparent);
+  background: color-mix(in srgb, var(--cf-primary) 40%, transparent);
 }
 
 .font-display {
   font-family: var(--font-display), var(--font-body), system-ui, sans-serif;
 }
 
-.wl-grid-bg {
-  background-color: var(--wealth-background);
+.cf-grid-bg {
+  background-color: var(--cf-background);
   background-image:
-    radial-gradient(ellipse 80% 50% at 20% -10%, color-mix(in srgb, var(--wealth-primary) 22%, transparent), transparent),
-    radial-gradient(ellipse 60% 40% at 90% 0%, color-mix(in srgb, var(--wealth-secondary) 14%, transparent), transparent),
-    linear-gradient(var(--wealth-grid-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--wealth-grid-line) 1px, transparent 1px);
+    radial-gradient(ellipse 80% 50% at 20% -10%, color-mix(in srgb, var(--cf-primary) 18%, transparent), transparent),
+    radial-gradient(ellipse 60% 40% at 90% 0%, color-mix(in srgb, var(--cf-primary) 8%, transparent), transparent),
+    linear-gradient(var(--cf-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--cf-grid-line) 1px, transparent 1px);
   background-size: auto, auto, 48px 48px, 48px 48px;
   transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-.wl-card {
+.cf-card {
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--wealth-surface-2) 88%, var(--wealth-surface) 12%),
-    var(--wealth-surface)
+    color-mix(in srgb, var(--cf-surface-2) 88%, var(--cf-surface) 12%),
+    var(--cf-surface)
   );
-  border: 1px solid var(--wealth-border);
-  border-radius: var(--wealth-radius);
-  box-shadow: var(--wealth-shadow);
+  border: 1px solid var(--cf-border);
+  border-radius: var(--cf-radius);
+  box-shadow: var(--cf-shadow);
   transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
-.wl-card-light {
-  background: var(--wealth-contrast-surface);
-  color: var(--wealth-contrast-text);
-  border-radius: var(--wealth-radius);
+.cf-card-light {
+  background: var(--cf-contrast-surface);
+  color: var(--cf-contrast-text);
+  border-radius: var(--cf-radius);
 }
 
-.wl-inset {
-  background: var(--wealth-inset);
+.cf-inset {
+  background: var(--cf-inset);
 }
 
-@keyframes wl-fade-up {
+@keyframes cf-fade-up {
   from {
     opacity: 0;
     transform: translateY(12px);
@@ -195,7 +191,7 @@ code {
   }
 }
 
-@keyframes wl-pulse-soft {
+@keyframes cf-pulse-soft {
   0%,
   100% {
     opacity: 0.55;
@@ -205,7 +201,7 @@ code {
   }
 }
 
-@keyframes wl-draw {
+@keyframes cf-draw {
   from {
     stroke-dashoffset: 120;
   }
@@ -215,23 +211,23 @@ code {
 }
 
 .animate-fade-up {
-  animation: wl-fade-up 0.55s ease-out both;
+  animation: cf-fade-up 0.55s ease-out both;
 }
 
 .animate-fade-up-delay-1 {
-  animation: wl-fade-up 0.55s ease-out 0.08s both;
+  animation: cf-fade-up 0.55s ease-out 0.08s both;
 }
 
 .animate-fade-up-delay-2 {
-  animation: wl-fade-up 0.55s ease-out 0.16s both;
+  animation: cf-fade-up 0.55s ease-out 0.16s both;
 }
 
 .animate-fade-up-delay-3 {
-  animation: wl-fade-up 0.55s ease-out 0.24s both;
+  animation: cf-fade-up 0.55s ease-out 0.24s both;
 }
 
 .animate-pulse-soft {
-  animation: wl-pulse-soft 2.4s ease-in-out infinite;
+  animation: cf-pulse-soft 2.4s ease-in-out infinite;
 }
 
 .scrollbar-thin::-webkit-scrollbar {
@@ -239,6 +235,6 @@ code {
   height: 6px;
 }
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: var(--wealth-scrollbar);
+  background: var(--cf-scrollbar);
   border-radius: 99px;
 }

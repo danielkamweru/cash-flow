@@ -13,5 +13,5 @@ export default function BusinessWealthPage() {
     router.replace("/dashboard");
   }, [setEntityType, router]);
 
-  return <p className="text-sm text-wl-muted">Switching to Business wealth…</p>;
+  return <p className="text-sm text-cf-muted">Switching to Business wealth…</p>;
 }
