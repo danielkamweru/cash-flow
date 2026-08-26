@@ -1,6 +1,6 @@
 # Cash-Flow
 
-A professional personal-finance platform for Kenya. FastAPI backend on **:4000**, Next.js frontend on **:3000**.
+A professional personal-finance platform for Kenya. FastAPI backend on **:8000**, Next.js frontend on **:3000**.
 
 > **Cash-Flow** — Understand your money. Control your flow.
 
@@ -69,7 +69,7 @@ Run from the repo root:
 | Script | Description |
 |--------|-------------|
 | `npm run dev:frontend` | Next.js on :3000 |
-| `npm run dev:backend` | Uvicorn on :4000 |
+| `npm run dev:backend` | Uvicorn on :8000 |
 | `npm run backend:seed` | Clear DB and load demo seed |
 
 ### Backend Commands
@@ -81,9 +81,9 @@ Run from `backend/`:
 | `source .venv/bin/activate` | Activate virtual environment |
 | `pip install -r requirements.txt` | Install Python dependencies |
 | `python -m app.seed` | Seed demo data (Amina Otieno) |
-| `npm start` | Start API on :4000 |
+| `npm start` | Start API on :8000 |
 
-Health check → [http://localhost:4000/api/health](http://localhost:4000/api/health)
+Health check → [http://localhost:8000/api/health](http://localhost:8000/api/health)
 
 ### Frontend Commands
 
@@ -116,7 +116,7 @@ Run from `frontend/`:
 
 | Variable | Purpose |
 |----------|---------|
-| `NEXT_PUBLIC_API_URL` | Backend API URL (default `http://localhost:4000/api`) |
+| `NEXT_PUBLIC_API_URL` | Backend API URL (default `http://localhost:8000/api`) |
 
 ## LOOP Payments
 

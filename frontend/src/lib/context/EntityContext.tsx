@@ -115,7 +115,7 @@ export function useEntityData(): EntitySnapshot {
     throw new Error("Entity snapshot still loading");
   }
   if (!data) {
-    throw new Error(error ?? "Entity snapshot unavailable — start the ASP.NET API on :4000");
+    throw new Error(error ?? "Entity snapshot unavailable — start the FastAPI API on :8000");
   }
   return data;
 }

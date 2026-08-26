@@ -655,7 +655,7 @@ export default function PaymentsPage() {
           onClick={() => {
             setLoadingCallbacks(true);
             void fetch(
-              `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api"}/loop/callbacks`,
+              `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api"}/loop/callbacks`,
             )
               .then((r) => r.json())
               .then(setCallbacks)

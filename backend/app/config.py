@@ -26,7 +26,7 @@ def parse_cors_origins(raw: str) -> List[str]:
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
-    port: int = 4000
+    port: int = 8000
     database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/wealthloop"
     # Comma-separated list, e.g. https://app.vercel.app,http://localhost:3000
     cors_origin: str = "http://localhost:3000"
