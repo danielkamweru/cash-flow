@@ -1,4 +1,4 @@
-# Wealth Loop
+# Cash Flow
 
 Kenya-focused personal financial intelligence platform. FastAPI backend on **:4000**, Next.js frontend on **:3000**.
 
