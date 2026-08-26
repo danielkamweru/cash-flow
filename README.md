@@ -103,7 +103,7 @@ Run from `frontend/`:
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `PORT` | 4000 | Server port |
+| `PORT` | 8000 | Server port |
 | `DATABASE_URL` | `postgresql+psycopg://postgres:postgres@localhost:5432/wealthloop` | PostgreSQL connection |
 | `CORS_ORIGIN` | `http://localhost:3000` | Comma-separated allowed origins |
 | `JWT_SECRET` | dev secret | JWT signing secret |
