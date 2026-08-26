@@ -1,0 +1,217 @@
+"use client";
+
+import { RecordManager, type FieldSpec } from "@/components/financial/RecordManager";
+import { MetricCard, PageHeader, StatusPill } from "@/components/ui/primitives";
+import { liabilitiesApi, payDebt } from "@/lib/api/resources";
+import { useEntity, useEntityData } from "@/lib/context/EntityContext";
+import { formatKes } from "@/lib/format";
+import { useState } from "react";
+import type { Liability } from "@/lib/types";
+
+const FIELDS: FieldSpec[] = [
+  { key: "name", label: "Name", placeholder: "Phone financing" },
+  { key: "lender", label: "Lender", placeholder: "Equity Bank" },
+  { key: "balance", label: "Outstanding balance (KES)", kind: "number", placeholder: "28000" },
+  { key: "monthlyPayment", label: "Monthly payment (KES)", kind: "number", placeholder: "4500" },
+  { key: "interestRate", label: "Interest rate (%)", kind: "number", required: false, step: "0.1" },
+  {
+    key: "dueDay",
+    label: "Day of month due",
+    kind: "number",
+    required: false,
+    step: "1",
+    hint: "1–31, if it has a fixed due date.",
+  },
+];
+
+/** Pay down a liability from an account, optionally pushing the money over LOOP. */
+function RepayPanel({ liability, onDone }: { liability: Liability; onDone: () => void }) {
+  const { entityId } = useEntity();
+  const data = useEntityData();
+  const [accountId, setAccountId] = useState(data.accounts[0]?.id ?? "");
+  const [amount, setAmount] = useState(String(Math.min(liability.monthlyPayment, liability.balance)));
+  const [useLoop, setUseLoop] = useState(false);
+  const [paybill, setPaybill] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState<string | null>(null);
+
+  const field =
+    "w-full rounded-xl border border-wl-border bg-wl-surface-2 px-3 py-2.5 text-sm text-wl-text outline-none focus:border-wl-primary/50";
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await payDebt(entityId, {
+        accountId,
+        liabilityId: liability.id,
+        amount: Number(amount),
+        ...(useLoop ? { channel: "paybill", destination: paybill, accountNumber } : {}),
+      });
+      setDone(`Paid. ${liability.name} is now ${formatKes(res.liability.balance)}.`);
+      onDone();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Payment failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form onSubmit={submit} className="wl-card mt-2 space-y-3 p-5">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="block space-y-1.5 text-sm">
+          <span className="text-xs font-medium uppercase tracking-wide text-wl-muted">Pay from</span>
+          <select value={accountId} onChange={(e) => setAccountId(e.target.value)} className={field}>
+            {data.accounts.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name} — {formatKes(a.balance)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block space-y-1.5 text-sm">
+          <span className="text-xs font-medium uppercase tracking-wide text-wl-muted">Amount (KES)</span>
+          <input
+            type="number"
+            step="0.01"
+            required
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className={field}
+          />
+        </label>
+      </div>
+
+      <label className="flex items-center gap-2 text-sm text-wl-muted">
+        <input
+          type="checkbox"
+          checked={useLoop}
+          onChange={(e) => setUseLoop(e.target.checked)}
+          className="rounded border-wl-border"
+        />
+        Send the money through LOOP paybill
+      </label>
+
+      {useLoop && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block space-y-1.5 text-sm">
+            <span className="text-xs font-medium uppercase tracking-wide text-wl-muted">Paybill</span>
+            <input
+              required
+              value={paybill}
+              onChange={(e) => setPaybill(e.target.value)}
+              placeholder="888880"
+              className={field}
+            />
+          </label>
+          <label className="block space-y-1.5 text-sm">
+            <span className="text-xs font-medium uppercase tracking-wide text-wl-muted">
+              Account number
+            </span>
+            <input
+              required
+              value={accountNumber}
+              onChange={(e) => setAccountNumber(e.target.value)}
+              className={field}
+            />
+          </label>
+        </div>
+      )}
+
+      {error && <p className="text-sm text-wl-danger">{error}</p>}
+      {done && <p className="text-sm text-wl-success">{done}</p>}
+
+      <button
+        type="submit"
+        disabled={busy}
+        className="rounded-full bg-gradient-to-r from-wl-primary to-wl-secondary px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+      >
+        {busy ? "Paying…" : "Make payment"}
+      </button>
+    </form>
+  );
+}
+
+export default function LiabilitiesPage() {
+  const data = useEntityData();
+  const { refresh } = useEntity();
+  const [repaying, setRepaying] = useState<string | null>(null);
+
+  return (
+    <div className="mx-auto max-w-6xl space-y-6">
+      <PageHeader
+        title="Liabilities"
+        subtitle="Loans and credit obligations that reduce net worth and constrain surplus."
+      />
+      <MetricCard label="Total liabilities" value={data.liabilities} tone="danger" />
+
+      <RecordManager
+        title="What you owe"
+        addLabel="Add liability"
+        fields={FIELDS}
+        items={data.liabilitiesList}
+        api={liabilitiesApi}
+        emptyMessage="Nothing owed. Add a loan or credit facility to track it here."
+        toValues={(l) => ({
+          name: l.name,
+          lender: l.lender,
+          balance: l.balance,
+          monthlyPayment: l.monthlyPayment,
+          interestRate: l.interestRate ?? "",
+          dueDay: l.dueDay ?? "",
+        })}
+        toPayload={(v) => ({
+          name: String(v.name),
+          lender: String(v.lender),
+          balance: Number(v.balance),
+          monthlyPayment: Number(v.monthlyPayment),
+          interestRate: v.interestRate === "" ? null : Number(v.interestRate),
+          dueDay: v.dueDay === "" ? null : Number(v.dueDay),
+        })}
+        renderItem={(l, controls) => (
+          <div>
+            <article className="wl-card flex items-start justify-between gap-3 p-5">
+              <div className="min-w-0">
+                <div className="mb-1 flex flex-wrap items-center gap-2">
+                  <h3 className="font-display text-lg font-semibold">{l.name}</h3>
+                  <StatusPill status={l.provenance} />
+                </div>
+                <p className="text-xs text-wl-muted">{l.lender}</p>
+                <p className="mt-3 font-display text-2xl font-semibold tabular-nums">
+                  {formatKes(l.balance)}
+                </p>
+                <p className="mt-2 text-xs text-wl-muted">
+                  Monthly service {formatKes(l.monthlyPayment)}
+                  {l.interestRate != null ? ` · ${l.interestRate}%` : ""}
+                </p>
+                {l.balance > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setRepaying(repaying === l.id ? null : l.id)}
+                    className="mt-3 rounded-full border border-wl-primary/40 px-4 py-1.5 text-xs font-semibold text-wl-text hover:bg-wl-primary/10"
+                  >
+                    {repaying === l.id ? "Close" : "Make a payment"}
+                  </button>
+                )}
+              </div>
+              {controls}
+            </article>
+            {repaying === l.id && (
+              <RepayPanel
+                liability={l}
+                onDone={() => {
+                  refresh();
+                  setRepaying(null);
+                }}
+              />
+            )}
+          </div>
+        )}
+      />
+    </div>
+  );
+}

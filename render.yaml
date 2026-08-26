@@ -1,0 +1,55 @@
+# https://render.com/docs/blueprint-spec
+databases:
+  - name: wealthloop-db
+    plan: free
+    databaseName: wealthloop
+    user: wealthloop
+
+services:
+  - type: web
+    name: wealth-loop-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.8"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: wealthloop-db
+          property: connectionString
+      - key: CORS_ORIGIN
+        sync: false
+      - key: CORS_ORIGIN_REGEX
+        value: 'https://.*\.vercel\.app'
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRE_HOURS
+        value: "72"
+      - key: LOOP_BASE_URL
+        value: https://sandbox.loop.co.ke
+      - key: LOOP_GATEWAY_BASE_URL
+        value: https://sandbox.loop.co.ke/gateway
+      - key: LOOP_CALLBACK_BASE_URL
+        sync: false
+      - key: LOOP_CONSUMER_KEY
+        sync: false
+      - key: LOOP_CONSUMER_SECRET
+        sync: false
+      - key: LOOP_DEFAULT_TILL
+        sync: false
+      - key: LOOP_DEFAULT_TILL_SECRET
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false

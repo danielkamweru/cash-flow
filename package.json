@@ -1,0 +1,12 @@
+{
+  "name": "wealth-loop",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev:frontend": "npm run dev --prefix frontend",
+    "dev:backend": "npm run start --prefix backend",
+    "backend:seed": "npm run seed --prefix backend",
+    "db:schema": "psql -h localhost -U postgres -d wealthloop -f database/schema.sql",
+    "db:seed-sql": "psql -h localhost -U postgres -d wealthloop -f database/seed.sql"
+  }
+}
