@@ -19,6 +19,7 @@ import {
 import { useEntity, useEntityData } from "@/lib/context/EntityContext";
 import { cn } from "@/lib/format";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { PinInput } from "@/components/ui/PasswordInput";
 
 function Field({
   label,
@@ -298,9 +299,7 @@ function ProductDetail({
           {needsPin && (
             <div className="rounded-xl border border-cf-primary/30 bg-cf-primary/5 px-4 py-3">
               <Field label="4-digit transaction PIN">
-                <input
-                  type="password"
-                  inputMode="numeric"
+                <PinInput
                   pattern="[0-9]{4}"
                   maxLength={4}
                   autoComplete="off"

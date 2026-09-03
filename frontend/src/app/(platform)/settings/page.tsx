@@ -8,7 +8,7 @@ import { useEntityData } from "@/lib/context/EntityContext";
 import { useTheme } from "@/lib/context/ThemeContext";
 import { cn } from "@/lib/format";
 import { ShieldCheck } from "lucide-react";
-import { PasswordInput } from "@/components/ui/PasswordInput";
+import { MatchHint, PasswordInput, PinInput } from "@/components/ui/PasswordInput";
 import { useEffect, useState } from "react";
 
 /** Sets the 4-digit PIN required for M-Pesa and Pesalink send-money. */
@@ -20,19 +20,17 @@ function TransactionPinCard({ hasPin, onSaved }: { hasPin: boolean; onSaved: () 
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const pinMismatch = confirmPin.length > 0 && pin !== confirmPin;
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setSaved(false);
 
-    if (!/^\d{4}$/.test(pin)) {
-      setError("PIN must be exactly 4 digits.");
-      return;
-    }
-    if (pin !== confirmPin) {
-      setError("The two PINs do not match.");
-      return;
-    }
+    if (!pin) { setError("PIN is required."); return; }
+    if (!/^\d{4}$/.test(pin)) { setError("PIN must be exactly 4 digits."); return; }
+    if (pin !== confirmPin) { setError("PINs do not match."); return; }
+    if (!password) { setError("Password is required."); return; }
 
     setSaving(true);
     try {
@@ -77,10 +75,8 @@ function TransactionPinCard({ hasPin, onSaved }: { hasPin: boolean; onSaved: () 
           <span className="block text-xs font-medium uppercase tracking-wide text-cf-muted">
             {hasPin ? "New PIN" : "Choose a PIN"}
           </span>
-          <input
+          <PinInput
             required
-            type="password"
-            inputMode="numeric"
             maxLength={4}
             autoComplete="off"
             placeholder="••••"
@@ -93,16 +89,20 @@ function TransactionPinCard({ hasPin, onSaved }: { hasPin: boolean; onSaved: () 
           <span className="block text-xs font-medium uppercase tracking-wide text-cf-muted">
             Confirm PIN
           </span>
-          <input
+          <PinInput
             required
-            type="password"
-            inputMode="numeric"
             maxLength={4}
             autoComplete="off"
             placeholder="••••"
             value={confirmPin}
             onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ""))}
             className={field}
+          />
+          <MatchHint
+            value={pin}
+            confirmValue={confirmPin}
+            matchText="✓ PINs match"
+            mismatchText="PINs do not match"
           />
         </label>
         <label className="space-y-1.5 text-sm sm:col-span-2">
@@ -121,7 +121,7 @@ function TransactionPinCard({ hasPin, onSaved }: { hasPin: boolean; onSaved: () 
         <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
           <button
             type="submit"
-            disabled={saving}
+            disabled={saving || pinMismatch}
             className="rounded-full bg-gradient-to-r from-cf-primary to-cf-primary-deep px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
           >
             {saving ? "Saving…" : hasPin ? "Update PIN" : "Set PIN"}

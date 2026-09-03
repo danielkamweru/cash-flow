@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import { ArrowRight, KeyRound, Lock, Mail, Phone, Shield, TrendingUp, User } from "lucide-react";
-import { PasswordInput } from "@/components/ui/PasswordInput";
+import { MatchHint, PasswordInput, PinInput } from "@/components/ui/PasswordInput";
 import { useAuth } from "@/lib/context/AuthContext";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 
@@ -15,6 +15,7 @@ export default function SignUpPage() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [pin, setPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -24,18 +25,17 @@ export default function SignUpPage() {
     if (!authLoading && user) router.replace("/dashboard");
   }, [authLoading, user, router]);
 
+  const passwordMismatch = confirmPassword.length > 0 && password !== confirmPassword;
+  const pinMismatch = confirmPin.length > 0 && pin !== confirmPin;
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
 
-    if (!/^\d{4}$/.test(pin)) {
-      setError("Your transaction PIN must be exactly 4 digits.");
-      return;
-    }
-    if (pin !== confirmPin) {
-      setError("The two PINs do not match.");
-      return;
-    }
+    if (!password) { setError("Password is required."); return; }
+    if (password !== confirmPassword) { setError("Passwords do not match."); return; }
+    if (!/^\d{4}$/.test(pin)) { setError("Transaction PIN must be exactly 4 digits."); return; }
+    if (pin !== confirmPin) { setError("PINs do not match."); return; }
 
     setSubmitting(true);
     try {
@@ -53,6 +53,8 @@ export default function SignUpPage() {
       setSubmitting(false);
     }
   }
+
+  const canSubmit = !submitting && !passwordMismatch && !pinMismatch;
 
   return (
     <div className="cf-grid-bg flex min-h-dvh max-w-[100vw] flex-col overflow-x-clip text-cf-text">
@@ -110,6 +112,7 @@ export default function SignUpPage() {
                 />
               </span>
             </label>
+
             <label className="block space-y-1.5">
               <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Email</span>
               <span className="relative flex">
@@ -124,6 +127,7 @@ export default function SignUpPage() {
                 />
               </span>
             </label>
+
             <label className="block space-y-1.5">
               <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Phone (optional)</span>
               <span className="relative flex">
@@ -137,18 +141,34 @@ export default function SignUpPage() {
                 />
               </span>
             </label>
-            <label className="block space-y-1.5">
-              <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Password</span>
-              <PasswordInput
-                required
-                minLength={6}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-xl border border-cf-border bg-cf-bg py-3 text-sm outline-none ring-cf-primary/40 focus:ring-2"
-                placeholder="At least 6 characters"
-                leftIcon={<Lock className="h-4 w-4" />}
-              />
-            </label>
+
+            <div className="space-y-3">
+              <label className="block space-y-1.5">
+                <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Password</span>
+                <PasswordInput
+                  required
+                  minLength={6}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full rounded-xl border border-cf-border bg-cf-bg py-3 text-sm outline-none ring-cf-primary/40 focus:ring-2"
+                  placeholder="At least 6 characters"
+                  leftIcon={<Lock className="h-4 w-4" />}
+                />
+              </label>
+              <label className="block space-y-1.5">
+                <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Confirm password</span>
+                <PasswordInput
+                  required
+                  minLength={6}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full rounded-xl border border-cf-border bg-cf-bg py-3 text-sm outline-none ring-cf-primary/40 focus:ring-2"
+                  placeholder="Repeat your password"
+                  leftIcon={<Lock className="h-4 w-4" />}
+                />
+                <MatchHint value={password} confirmValue={confirmPassword} />
+              </label>
+            </div>
 
             <div className="rounded-2xl border border-cf-primary/25 bg-cf-primary/5 p-4">
               <div className="mb-3 flex items-start gap-2.5">
@@ -164,10 +184,8 @@ export default function SignUpPage() {
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="block space-y-1.5">
                   <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">PIN</span>
-                  <input
-                    type="password"
+                  <PinInput
                     required
-                    inputMode="numeric"
                     maxLength={4}
                     autoComplete="off"
                     value={pin}
@@ -178,16 +196,20 @@ export default function SignUpPage() {
                 </label>
                 <label className="block space-y-1.5">
                   <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Confirm</span>
-                  <input
-                    type="password"
+                  <PinInput
                     required
-                    inputMode="numeric"
                     maxLength={4}
                     autoComplete="off"
                     value={confirmPin}
                     onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ""))}
                     className="w-full rounded-xl border border-cf-border bg-cf-bg px-4 py-3 text-center text-lg tracking-[0.5em] outline-none ring-cf-primary/40 focus:ring-2"
                     placeholder="••••"
+                  />
+                  <MatchHint
+                    value={pin}
+                    confirmValue={confirmPin}
+                    matchText="✓ PINs match"
+                    mismatchText="PINs do not match"
                   />
                 </label>
               </div>
@@ -201,7 +223,7 @@ export default function SignUpPage() {
 
             <button
               type="submit"
-              disabled={submitting}
+              disabled={!canSubmit}
               className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-cf-primary to-cf-primary-deep px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-cf-primary/25 disabled:opacity-60"
             >
               {submitting ? "Creating account…" : "Create account"}
