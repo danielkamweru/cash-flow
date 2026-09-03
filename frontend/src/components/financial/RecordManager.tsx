@@ -155,9 +155,11 @@ export function RecordManager<T extends { id: string }>({
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function onDelete(id: string) {
+    setDeletingId(id);
     setError(null);
     try {
       await api.remove(entityId, id);
@@ -166,6 +168,7 @@ export function RecordManager<T extends { id: string }>({
       setError(e instanceof Error ? e.message : "Could not delete");
     } finally {
       setPendingDelete(null);
+      setDeletingId(null);
     }
   }
 
@@ -187,9 +190,10 @@ export function RecordManager<T extends { id: string }>({
           <button
             type="button"
             onClick={() => void onDelete(item.id)}
-            className="rounded-lg bg-cf-danger/15 px-2 py-1.5 text-[11px] font-semibold text-cf-danger"
+            disabled={deletingId === item.id}
+            className="rounded-lg bg-cf-danger/15 px-2 py-1.5 text-[11px] font-semibold text-cf-danger disabled:opacity-60"
           >
-            Confirm
+            {deletingId === item.id ? "Deleting…" : "Confirm"}
           </button>
           <button
             type="button"

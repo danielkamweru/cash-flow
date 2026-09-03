@@ -30,7 +30,7 @@ function TransactionPinCard({ hasPin, onSaved }: { hasPin: boolean; onSaved: () 
     if (!pin) { setError("PIN is required."); return; }
     if (!/^\d{4}$/.test(pin)) { setError("PIN must be exactly 4 digits."); return; }
     if (pin !== confirmPin) { setError("PINs do not match."); return; }
-    if (!password) { setError("Password is required."); return; }
+    if (!password) { setError("Account password is required."); return; }
 
     setSaving(true);
     try {

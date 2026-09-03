@@ -129,8 +129,11 @@ function ExecutePanel({
 
   async function run(e: React.FormEvent) {
     e.preventDefault();
-    setBusy(true);
     setError(null);
+    if (!accountId) { setError("Please select an account."); return; }
+    const value = Number(amount);
+    if (!amount || isNaN(value) || value <= 0) { setError("Please enter a valid amount greater than zero."); return; }
+    setBusy(true);
     try {
       const value = Number(amount);
       if (kind === "debt" && liability) {

@@ -23,6 +23,8 @@ export default function SignInPage() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!email.trim()) { setError("Email is required."); return; }
+    if (!password) { setError("Password is required."); return; }
     setSubmitting(true);
     try {
       await signIn(email.trim(), password);

@@ -42,8 +42,13 @@ function RepayPanel({ liability, onDone }: { liability: Liability; onDone: () =>
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    setBusy(true);
     setError(null);
+    if (!accountId) { setError("Please select an account."); return; }
+    const value = Number(amount);
+    if (!amount || isNaN(value) || value <= 0) { setError("Please enter a valid amount greater than zero."); return; }
+    if (useLoop && !paybill.trim()) { setError("Paybill number is required."); return; }
+    if (useLoop && !accountNumber.trim()) { setError("Account number is required."); return; }
+    setBusy(true);
     try {
       const res = await payDebt(entityId, {
         accountId,

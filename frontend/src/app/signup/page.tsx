@@ -32,6 +32,8 @@ export default function SignUpPage() {
     e.preventDefault();
     setError(null);
 
+    if (!name.trim()) { setError("Full name is required."); return; }
+    if (!email.trim()) { setError("Email is required."); return; }
     if (!password) { setError("Password is required."); return; }
     if (password !== confirmPassword) { setError("Passwords do not match."); return; }
     if (!/^\d{4}$/.test(pin)) { setError("Transaction PIN must be exactly 4 digits."); return; }

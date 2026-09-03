@@ -5,6 +5,7 @@ import { MetricCard, PageHeader } from "@/components/ui/primitives";
 import { obligationsApi } from "@/lib/api/resources";
 import { useEntity, useEntityData } from "@/lib/context/EntityContext";
 import { cn, formatKes } from "@/lib/format";
+import { useState } from "react";
 
 const FIELDS: FieldSpec[] = [
   { key: "name", label: "Bill", placeholder: "September rent" },
@@ -30,6 +31,7 @@ function daysUntil(date: string): number {
 export default function BillsPage() {
   const data = useEntityData();
   const { refresh } = useEntity();
+  const [markingPaid, setMarkingPaid] = useState<string | null>(null);
 
   const bills = [...data.obligations].sort(
     (a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime(),
@@ -103,13 +105,19 @@ export default function BillsPage() {
                 {!paid && (
                   <button
                     type="button"
+                    disabled={markingPaid === b.id}
                     onClick={async () => {
-                      await obligationsApi.update(b.entityId, b.id, { status: "paid" });
-                      refresh();
+                      setMarkingPaid(b.id);
+                      try {
+                        await obligationsApi.update(b.entityId, b.id, { status: "paid" });
+                        refresh();
+                      } finally {
+                        setMarkingPaid(null);
+                      }
                     }}
-                    className="mt-3 rounded-full border border-cf-border px-4 py-1.5 text-xs font-semibold text-cf-muted hover:text-cf-text"
+                    className="mt-3 rounded-full border border-cf-border px-4 py-1.5 text-xs font-semibold text-cf-muted hover:text-cf-text disabled:opacity-60"
                   >
-                    Mark paid
+                    {markingPaid === b.id ? "Saving…" : "Mark paid"}
                   </button>
                 )}
               </div>

@@ -52,8 +52,11 @@ function FundPanel({ goal, onDone }: { goal: Goal; onDone: () => void }) {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    setBusy(true);
     setError(null);
+    if (!accountId) { setError("Please select an account."); return; }
+    const value = Number(amount);
+    if (!amount || isNaN(value) || value <= 0) { setError("Please enter a valid amount greater than zero."); return; }
+    setBusy(true);
     try {
       const res = await fundGoal(entityId, { accountId, goalId: goal.id, amount: Number(amount) });
       setDone(`Added. ${goal.name} is now at ${formatKes(res.goal.current)}.`);
