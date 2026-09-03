@@ -1,5 +1,6 @@
 "use client";
 
+import { SensitiveValue } from "@/components/ui/SensitiveValue";
 import { formatKes } from "@/lib/format";
 
 export function CashFlowChart({
@@ -71,7 +72,7 @@ export function NetWorthHero({
           Where am I?
         </p>
         <h2 className="mt-2 break-words font-display text-3xl font-semibold tracking-tight text-cf-text sm:text-4xl md:text-5xl">
-          {formatKes(netWorth)}
+          <SensitiveValue value={netWorth} />
         </h2>
         <p className="mt-1 text-sm text-cf-muted">Total net worth · assets − liabilities</p>
 
@@ -88,7 +89,7 @@ export function NetWorthHero({
             >
               <p className="text-[10px] uppercase tracking-wide text-cf-muted">{m.label}</p>
               <p className="mt-1 break-words font-display text-base font-semibold text-cf-text sm:text-lg">
-                {formatKes(m.value, { signed: m.signed })}
+                <SensitiveValue value={m.value} signed={m.signed} />
               </p>
             </div>
           ))}

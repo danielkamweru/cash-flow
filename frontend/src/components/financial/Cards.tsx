@@ -1,5 +1,6 @@
 "use client";
 
+import { SensitiveValue } from "@/components/ui/SensitiveValue";
 import { formatKes, progressRatio } from "@/lib/format";
 import type { Goal, Recommendation } from "@/lib/types";
 import { ProgressBar, StatusPill } from "@/components/ui/primitives";
@@ -19,18 +20,18 @@ export function GoalCard({ goal }: { goal: Goal }) {
         <StatusPill status="demo" />
       </div>
       <p className="break-words font-display text-lg font-semibold text-cf-text sm:text-xl">
-        {formatKes(goal.current)}{" "}
-        <span className="text-sm font-normal text-cf-muted">/ {formatKes(goal.target)}</span>
+        <SensitiveValue value={goal.current} />{" "}
+        <span className="text-sm font-normal text-cf-muted">/ <SensitiveValue value={goal.target} /></span>
       </p>
       <ProgressBar value={ratio} className="mt-3" />
       <div className="mt-4 grid grid-cols-2 gap-3 text-xs text-cf-muted">
         <div className="min-w-0">
           <p className="uppercase tracking-wide">Remaining</p>
-          <p className="mt-0.5 break-words text-sm text-cf-text">{formatKes(remaining)}</p>
+          <p className="mt-0.5 break-words text-sm text-cf-text"><SensitiveValue value={remaining} /></p>
         </div>
         <div className="min-w-0">
           <p className="uppercase tracking-wide">Monthly</p>
-          <p className="mt-0.5 break-words text-sm text-cf-text">{formatKes(goal.monthlyContribution)}</p>
+          <p className="mt-0.5 break-words text-sm text-cf-text"><SensitiveValue value={goal.monthlyContribution} /></p>
         </div>
         <div className="col-span-2 min-w-0">
           <p className="uppercase tracking-wide">Deadline</p>

@@ -22,12 +22,19 @@ export function authHeaders(extra?: HeadersInit): HeadersInit {
   };
 }
 
+function handleUnauthorized(status: number) {
+  if (status === 401 && typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("auth:expired"));
+  }
+}
+
 export async function apiGet<T>(path: string): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     cache: "no-store",
     headers: authHeaders(),
   });
   if (!res.ok) {
+    handleUnauthorized(res.status);
     const body = await res.text();
     throw new Error(`API ${path} failed (${res.status}): ${body}`);
   }
@@ -42,6 +49,7 @@ export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   if (!res.ok) {
+    handleUnauthorized(res.status);
     let message = `API ${path} failed (${res.status})`;
     try {
       const data = (await res.json()) as { error?: string; detail?: { error?: string } };
@@ -62,6 +70,7 @@ async function send<T>(path: string, method: "PATCH" | "DELETE" | "PUT", body?: 
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   if (!res.ok) {
+    handleUnauthorized(res.status);
     let message = `API ${path} failed (${res.status})`;
     try {
       const data = (await res.json()) as { error?: string; detail?: { error?: string } | string };

@@ -6,9 +6,11 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
+import { useRouter } from "next/navigation";
 import {
   fetchMe,
   signIn as apiSignIn,
@@ -41,6 +43,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<ApiUser | null>(null);
   const [loopAuthorization, setLoopAuthorization] = useState<LoopAuthorization | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  // Prevent double-redirect if multiple 401s fire simultaneously
+  const expiredRef = useRef(false);
 
   const refresh = useCallback(async () => {
     const token = getAuthToken();
@@ -66,6 +71,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  // Global 401 handler — any API call that gets a 401 fires this event
+  useEffect(() => {
+    function onExpired() {
+      if (expiredRef.current) return;
+      expiredRef.current = true;
+      apiSignOut();
+      setUser(null);
+      setLoopAuthorization(null);
+      router.replace("/signin?reason=expired");
+    }
+    window.addEventListener("auth:expired", onExpired);
+    return () => window.removeEventListener("auth:expired", onExpired);
+  }, [router]);
 
   const signIn = useCallback(async (email: string, password: string) => {
     const data = await apiSignIn({ email, password });

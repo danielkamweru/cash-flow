@@ -2,16 +2,21 @@
 
 import { useAuth } from "@/lib/context/AuthContext";
 import { useEntity } from "@/lib/context/EntityContext";
+import { usePrivacy } from "@/lib/context/PrivacyContext";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { formatKes, formatRelative, cn } from "@/lib/format";
-import { Bell, LogOut, Menu, User } from "lucide-react";
+import { Bell, Eye, EyeOff, LogOut, Menu, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 
 export function TopBar({ onMenu }: { onMenu?: () => void }) {
   const { entityType, setEntityType, data, consolidatedNetWorth, source } = useEntity();
   const { user, loopAuthorization, signOut } = useAuth();
+  const { hidden, toggleHidden } = usePrivacy();
   const router = useRouter();
+  const [confirmSignOut, setConfirmSignOut] = useState(false);
 
   return (
     <header className="sticky top-0 z-30 border-b border-cf-border bg-cf-bg/80 px-3 backdrop-blur-xl sm:px-4 md:px-6">
@@ -89,6 +94,14 @@ export function TopBar({ onMenu }: { onMenu?: () => void }) {
         </div>
 
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+          <button
+            type="button"
+            aria-label={hidden ? "Show balances" : "Hide balances"}
+            onClick={toggleHidden}
+            className="rounded-lg border border-cf-border p-2 text-cf-muted hover:text-cf-text"
+          >
+            {hidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
           <ThemeToggle />
           <Link
             href="/notifications"
@@ -118,10 +131,7 @@ export function TopBar({ onMenu }: { onMenu?: () => void }) {
           <button
             type="button"
             aria-label="Sign out"
-            onClick={() => {
-              signOut();
-              router.push("/signin");
-            }}
+            onClick={() => setConfirmSignOut(true)}
             className="rounded-lg border border-cf-border p-2 text-cf-muted hover:text-cf-text"
           >
             <LogOut className="h-4 w-4" />
@@ -140,6 +150,21 @@ export function TopBar({ onMenu }: { onMenu?: () => void }) {
           LOOP {loopAuthorization?.authorized ? "ok" : "pending"}
         </p>
       </div>
+
+      <ConfirmModal
+        open={confirmSignOut}
+        title="Sign out"
+        confirmLabel="Sign out"
+        variant="danger"
+        onConfirm={() => {
+          setConfirmSignOut(false);
+          signOut();
+          router.push("/signin");
+        }}
+        onCancel={() => setConfirmSignOut(false)}
+      >
+        <p>Are you sure you want to sign out?</p>
+      </ConfirmModal>
     </header>
   );
 }

@@ -1,3 +1,6 @@
+"use client";
+
+import { SensitiveValue } from "@/components/ui/SensitiveValue";
 import { cn, formatKes } from "@/lib/format";
 import type { ReactNode } from "react";
 
@@ -16,7 +19,6 @@ export function MetricCard({
   badge?: string;
   className?: string;
 }) {
-  const display = typeof value === "number" ? formatKes(value) : value;
   return (
     <div className={cn("cf-card min-w-0 p-4 md:p-5", className)}>
       <div className="mb-2 flex items-start justify-between gap-2">
@@ -37,7 +39,7 @@ export function MetricCard({
           tone === "default" && "text-cf-text",
         )}
       >
-        {display}
+        {typeof value === "number" ? <SensitiveValue value={value} /> : value}
       </p>
       {hint && <p className="mt-1.5 text-xs text-cf-muted">{hint}</p>}
     </div>

@@ -1,12 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { FormEvent, Suspense, useEffect, useState } from "react";
 import { ArrowRight, Lock, Mail, Shield, TrendingUp } from "lucide-react";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { useAuth } from "@/lib/context/AuthContext";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
+
+function SessionExpiredBanner() {
+  const searchParams = useSearchParams();
+  if (searchParams.get("reason") !== "expired") return null;
+  return (
+    <div className="mb-4 rounded-xl border border-cf-warning/30 bg-cf-warning/10 px-3 py-2 text-sm text-cf-warning">
+      Your session expired. Please sign in again.
+    </div>
+  );
+}
 
 export default function SignInPage() {
   const router = useRouter();
@@ -73,6 +83,10 @@ export default function SignInPage() {
               </p>
             </div>
           </div>
+
+          <Suspense>
+            <SessionExpiredBanner />
+          </Suspense>
 
           <form onSubmit={onSubmit} className="space-y-4">
             <label className="block space-y-1.5">

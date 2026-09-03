@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Figtree, Space_Grotesk } from "next/font/google";
 import { ThemeProvider } from "@/lib/context/ThemeContext";
 import { AuthProvider } from "@/lib/context/AuthContext";
+import { PrivacyProvider } from "@/lib/context/PrivacyContext";
 import { ToastProvider } from "@/components/ui/Toast";
 import "./globals.css";
 
@@ -62,7 +63,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-full bg-cf-bg font-sans text-cf-text transition-colors duration-200">
         <ThemeProvider>
           <AuthProvider>
-            <ToastProvider>{children}</ToastProvider>
+            <PrivacyProvider>
+              <ToastProvider>{children}</ToastProvider>
+            </PrivacyProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>
