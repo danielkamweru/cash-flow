@@ -4,6 +4,7 @@ import { EntityProvider, useEntity } from "@/lib/context/EntityContext";
 import { useAuth } from "@/lib/context/AuthContext";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopBar } from "@/components/layout/TopBar";
+import { SkeletonDashboard } from "@/components/ui/Skeleton";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -42,32 +43,36 @@ function ApiGate({ children }: { children: React.ReactNode }) {
   const { loading, error, data, refresh } = useEntity();
 
   if (loading && !data) {
-    return (
-      <div className="flex min-h-[40vh] items-center justify-center px-2">
-        <p className="text-sm text-cf-muted">Loading live data from API…</p>
-      </div>
-    );
+    return <SkeletonDashboard />;
   }
 
   if (!data) {
     return (
-      <div className="mx-auto w-full max-w-lg space-y-4 rounded-2xl border border-cf-danger/30 bg-cf-danger/5 p-4 sm:p-6">
-        <h2 className="font-display text-lg font-semibold text-cf-text">Backend unavailable</h2>
+      <div className="mx-auto w-full max-w-lg space-y-4 rounded-2xl border border-cf-border bg-cf-surface p-6">
+        <h2 className="font-display text-lg font-semibold text-cf-text">
+          We couldn&apos;t load your financial data
+        </h2>
         <p className="text-sm text-cf-muted">
-          Start the FastAPI backend on port 4000, seed Postgres if needed, then retry.
+          This usually means the API is unreachable. Check your connection or restart the backend,
+          then try again.
         </p>
-        {error && (
-          <pre className="overflow-auto rounded-xl bg-[var(--cf-inset)] p-3 text-xs text-cf-danger">
-            {error}
-          </pre>
-        )}
         <button
           type="button"
           onClick={refresh}
-          className="w-full rounded-full bg-gradient-to-r from-cf-primary to-cf-primary-deep px-5 py-2.5 text-sm font-semibold text-white sm:w-auto"
+          className="rounded-full bg-gradient-to-r from-cf-primary to-cf-primary-deep px-5 py-2.5 text-sm font-semibold text-white"
         >
-          Retry
+          Try again
         </button>
+        {error && (
+          <details className="mt-2">
+            <summary className="cursor-pointer text-xs text-cf-muted hover:text-cf-text">
+              Technical details
+            </summary>
+            <pre className="mt-2 overflow-auto rounded-xl bg-[var(--cf-inset)] p-3 text-xs text-cf-danger">
+              {error}
+            </pre>
+          </details>
+        )}
       </div>
     );
   }
