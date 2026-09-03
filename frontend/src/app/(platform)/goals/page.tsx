@@ -2,9 +2,12 @@
 
 import { RecordManager, type FieldSpec } from "@/components/financial/RecordManager";
 import { PageHeader } from "@/components/ui/primitives";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { useToast } from "@/components/ui/Toast";
 import { fundGoal, goalsApi } from "@/lib/api/resources";
 import { useEntity, useEntityData } from "@/lib/context/EntityContext";
 import { formatKes } from "@/lib/format";
+import { friendlyError } from "@/lib/friendlyError";
 import type { Goal } from "@/lib/types";
 import { useState } from "react";
 
@@ -41,68 +44,94 @@ const FIELDS: FieldSpec[] = [
 function FundPanel({ goal, onDone }: { goal: Goal; onDone: () => void }) {
   const { entityId } = useEntity();
   const data = useEntityData();
+  const toast = useToast();
   const [accountId, setAccountId] = useState(data.accounts[0]?.id ?? "");
   const [amount, setAmount] = useState(String(goal.monthlyContribution || 1000));
   const [busy, setBusy] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<string | null>(null);
 
   const field =
     "w-full rounded-xl border border-cf-border bg-cf-surface-2 px-3 py-2.5 text-sm text-cf-text outline-none focus:border-cf-primary/50";
 
-  async function submit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     if (!accountId) { setError("Please select an account."); return; }
     const value = Number(amount);
     if (!amount || isNaN(value) || value <= 0) { setError("Please enter a valid amount greater than zero."); return; }
+    setConfirming(true);
+  }
+
+  async function execute() {
+    setConfirming(false);
     setBusy(true);
+    setError(null);
     try {
       const res = await fundGoal(entityId, { accountId, goalId: goal.id, amount: Number(amount) });
-      setDone(`Added. ${goal.name} is now at ${formatKes(res.goal.current)}.`);
+      toast(`Added to ${goal.name}. Now at ${formatKes(res.goal.current)}.`, "success");
       onDone();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not fund the goal");
+      const msg = friendlyError(err, "Could not fund the goal. Please try again.");
+      setError(msg);
+      toast(msg, "error");
     } finally {
       setBusy(false);
     }
   }
 
+  const account = data.accounts.find((a) => a.id === accountId);
+
   return (
-    <form onSubmit={submit} className="cf-card mt-2 space-y-3 p-5">
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="block space-y-1.5 text-sm">
-          <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">From</span>
-          <select value={accountId} onChange={(e) => setAccountId(e.target.value)} className={field}>
-            {data.accounts.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.name} — {formatKes(a.balance)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="block space-y-1.5 text-sm">
-          <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Amount (KES)</span>
-          <input
-            type="number"
-            step="0.01"
-            required
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className={field}
-          />
-        </label>
-      </div>
-      {error && <p className="text-sm text-cf-danger">{error}</p>}
-      {done && <p className="text-sm text-cf-success">{done}</p>}
-      <button
-        type="submit"
-        disabled={busy}
-        className="rounded-full bg-gradient-to-r from-cf-primary to-cf-primary-deep px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+    <>
+      <ConfirmModal
+        open={confirming}
+        title="Confirm transfer"
+        confirmLabel="Move funds"
+        onConfirm={() => void execute()}
+        onCancel={() => setConfirming(false)}
       >
-        {busy ? "Moving…" : "Add to goal"}
-      </button>
-    </form>
+        <p>
+          Move <strong className="text-cf-text">{formatKes(Number(amount))}</strong> from{" "}
+          <strong className="text-cf-text">{account?.name ?? "selected account"}</strong> into{" "}
+          <strong className="text-cf-text">{goal.name}</strong>?
+        </p>
+      </ConfirmModal>
+
+      <form onSubmit={handleSubmit} className="cf-card mt-2 space-y-3 p-5">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block space-y-1.5 text-sm">
+            <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">From</span>
+            <select value={accountId} onChange={(e) => setAccountId(e.target.value)} className={field}>
+              {data.accounts.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name} — {formatKes(a.balance)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block space-y-1.5 text-sm">
+            <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Amount (KES)</span>
+            <input
+              type="number"
+              step="0.01"
+              required
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className={field}
+            />
+          </label>
+        </div>
+        {error && <p className="text-sm text-cf-danger">{error}</p>}
+        <button
+          type="submit"
+          disabled={busy}
+          className="rounded-full bg-gradient-to-r from-cf-primary to-cf-primary-deep px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+        >
+          {busy ? "Moving…" : "Add to goal"}
+        </button>
+      </form>
+    </>
   );
 }
 

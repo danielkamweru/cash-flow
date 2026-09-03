@@ -1,6 +1,8 @@
 "use client";
 
 import { PageHeader } from "@/components/ui/primitives";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { useToast } from "@/components/ui/Toast";
 import {
   fetchAdvice,
   type AdvisorAction,
@@ -11,6 +13,7 @@ import {
 import { fundGoal, invest, payDebt } from "@/lib/api/resources";
 import { useEntity } from "@/lib/context/EntityContext";
 import { cn, formatKes } from "@/lib/format";
+import { friendlyError } from "@/lib/friendlyError";
 import {
   AlertTriangle,
   ArrowRight,
@@ -119,8 +122,10 @@ function ExecutePanel({
   const [accountId, setAccountId] = useState(accounts[0]?.id ?? "");
   const [amount, setAmount] = useState(String(action.amount ?? 0));
   const [busy, setBusy] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
+  const toast = useToast();
 
   if (!kind) return null;
 
@@ -133,15 +138,25 @@ function ExecutePanel({
     if (!accountId) { setError("Please select an account."); return; }
     const value = Number(amount);
     if (!amount || isNaN(value) || value <= 0) { setError("Please enter a valid amount greater than zero."); return; }
+    setConfirming(true);
+  }
+
+  async function execute() {
+    setConfirming(false);
     setBusy(true);
+    setError(null);
     try {
       const value = Number(amount);
       if (kind === "debt" && liability) {
         const res = await payDebt(entityId, { accountId, liabilityId: liability.id, amount: value });
-        setDone(`${liability.name} is now ${formatKes(res.liability.balance)}.`);
+        const msg = `${liability.name} balance is now ${formatKes(res.liability.balance)}.`;
+        setDone(msg);
+        toast(msg, "success");
       } else if (kind === "goal" && goal) {
         const res = await fundGoal(entityId, { accountId, goalId: goal.id, amount: value });
-        setDone(`${goal.name} is now at ${formatKes(res.goal.current)}.`);
+        const msg = `${goal.name} is now at ${formatKes(res.goal.current)}.`;
+        setDone(msg);
+        toast(msg, "success");
       } else {
         const res = await invest(entityId, {
           accountId,
@@ -149,18 +164,50 @@ function ExecutePanel({
           instrument: action.instrument!,
           name: action.instrumentLabel ?? undefined,
         });
-        setDone(`${res.investment.name} now holds ${formatKes(res.investment.value)}.`);
+        const msg = `${res.investment.name} now holds ${formatKes(res.investment.value)}.`;
+        setDone(msg);
+        toast(msg, "success");
       }
       onDone();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not complete this");
+      const msg = friendlyError(err, "Could not complete this action. Please try again.");
+      setError(msg);
+      toast(msg, "error");
     } finally {
       setBusy(false);
     }
   }
 
+  const account = accounts.find((a) => a.id === accountId);
+
   return (
-    <form onSubmit={run} className="mt-4 space-y-3 rounded-xl border border-cf-border bg-[var(--cf-inset)] p-4">
+    <>
+      <ConfirmModal
+        open={confirming}
+        title="Confirm action"
+        confirmLabel={
+          kind === "debt" ? "Make payment" : kind === "goal" ? "Move to goal" : "Invest"
+        }
+        onConfirm={() => void execute()}
+        onCancel={() => setConfirming(false)}
+      >
+        <p>
+          Move <strong className="text-cf-text">{formatKes(Number(amount))}</strong> from{" "}
+          <strong className="text-cf-text">{account?.name ?? "selected account"}</strong>
+          {kind === "debt" && liability && (
+            <> toward <strong className="text-cf-text">{liability.name}</strong></>
+          )}
+          {kind === "goal" && goal && (
+            <> into <strong className="text-cf-text">{goal.name}</strong></>
+          )}
+          {kind === "invest" && (
+            <> into <strong className="text-cf-text">{action.instrumentLabel ?? "investment"}</strong></>
+          )}
+          ?
+        </p>
+      </ConfirmModal>
+
+      <form onSubmit={run} className="mt-4 space-y-3 rounded-xl border border-cf-border bg-[var(--cf-inset)] p-4">
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="block space-y-1.5 text-sm">
           <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">From</span>
@@ -202,6 +249,7 @@ function ExecutePanel({
               : "Invest it"}
       </button>
     </form>
+    </>
   );
 }
 

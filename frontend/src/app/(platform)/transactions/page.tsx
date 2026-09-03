@@ -9,6 +9,27 @@ import type { Transaction } from "@/lib/types";
 import { Download, FileSpreadsheet, FileText, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+const STATUS_STYLES: Record<string, string> = {
+  completed: "bg-cf-success/15 text-cf-success",
+  pending: "bg-cf-warning/15 text-cf-warning",
+  failed: "bg-cf-danger/15 text-cf-danger",
+  cancelled: "bg-[var(--cf-inset)] text-cf-muted",
+};
+
+function TxnStatusBadge({ status }: { status?: string }) {
+  const s = status ?? "completed";
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+        STATUS_STYLES[s] ?? "bg-[var(--cf-inset)] text-cf-muted",
+      )}
+    >
+      {s}
+    </span>
+  );
+}
+
 /** YYYY-MM-DD in local time — the format the date input and the API both use. */
 function toInputDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -50,12 +71,6 @@ const PRESETS: { label: string; range: () => [string, string] }[] = [
     },
   },
 ];
-
-function statusTone(status?: string): string {
-  if (status === "pending") return "text-cf-warning";
-  if (status === "failed") return "text-cf-danger";
-  return "text-cf-muted";
-}
 
 export default function TransactionsPage() {
   const data = useEntityData();
@@ -277,9 +292,7 @@ export default function TransactionsPage() {
                     </td>
                     <td className="px-3 py-3 text-cf-muted sm:px-4">{t.category}</td>
                     <td className="px-3 py-3 sm:px-4">
-                      <span className={cn("text-xs font-medium capitalize", statusTone(t.status))}>
-                        {t.status ?? "completed"}
-                      </span>
+                      <TxnStatusBadge status={t.status} />
                       {t.status === "pending" && t.loopTxnReference && (
                         <button
                           type="button"

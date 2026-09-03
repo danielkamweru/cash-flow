@@ -2,9 +2,12 @@
 
 import { RecordManager, type FieldSpec } from "@/components/financial/RecordManager";
 import { MetricCard, PageHeader, StatusPill } from "@/components/ui/primitives";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { useToast } from "@/components/ui/Toast";
 import { liabilitiesApi, payDebt } from "@/lib/api/resources";
 import { useEntity, useEntityData } from "@/lib/context/EntityContext";
 import { formatKes } from "@/lib/format";
+import { friendlyError } from "@/lib/friendlyError";
 import { useState } from "react";
 import type { Liability } from "@/lib/types";
 
@@ -28,19 +31,20 @@ const FIELDS: FieldSpec[] = [
 function RepayPanel({ liability, onDone }: { liability: Liability; onDone: () => void }) {
   const { entityId } = useEntity();
   const data = useEntityData();
+  const toast = useToast();
   const [accountId, setAccountId] = useState(data.accounts[0]?.id ?? "");
   const [amount, setAmount] = useState(String(Math.min(liability.monthlyPayment, liability.balance)));
   const [useLoop, setUseLoop] = useState(false);
   const [paybill, setPaybill] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [busy, setBusy] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<string | null>(null);
 
   const field =
     "w-full rounded-xl border border-cf-border bg-cf-surface-2 px-3 py-2.5 text-sm text-cf-text outline-none focus:border-cf-primary/50";
 
-  async function submit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     if (!accountId) { setError("Please select an account."); return; }
@@ -48,7 +52,13 @@ function RepayPanel({ liability, onDone }: { liability: Liability; onDone: () =>
     if (!amount || isNaN(value) || value <= 0) { setError("Please enter a valid amount greater than zero."); return; }
     if (useLoop && !paybill.trim()) { setError("Paybill number is required."); return; }
     if (useLoop && !accountNumber.trim()) { setError("Account number is required."); return; }
+    setConfirming(true);
+  }
+
+  async function execute() {
+    setConfirming(false);
     setBusy(true);
+    setError(null);
     try {
       const res = await payDebt(entityId, {
         accountId,
@@ -56,88 +66,112 @@ function RepayPanel({ liability, onDone }: { liability: Liability; onDone: () =>
         amount: Number(amount),
         ...(useLoop ? { channel: "paybill", destination: paybill, accountNumber } : {}),
       });
-      setDone(`Paid. ${liability.name} is now ${formatKes(res.liability.balance)}.`);
+      toast(`Payment recorded. ${liability.name} balance is now ${formatKes(res.liability.balance)}.`, "success");
       onDone();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Payment failed");
+      const msg = friendlyError(err, "Payment failed. Please try again.");
+      setError(msg);
+      toast(msg, "error");
     } finally {
       setBusy(false);
     }
   }
 
+  const account = data.accounts.find((a) => a.id === accountId);
+
   return (
-    <form onSubmit={submit} className="cf-card mt-2 space-y-3 p-5">
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="block space-y-1.5 text-sm">
-          <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Pay from</span>
-          <select value={accountId} onChange={(e) => setAccountId(e.target.value)} className={field}>
-            {data.accounts.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.name} — {formatKes(a.balance)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="block space-y-1.5 text-sm">
-          <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Amount (KES)</span>
-          <input
-            type="number"
-            step="0.01"
-            required
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className={field}
-          />
-        </label>
-      </div>
+    <>
+      <ConfirmModal
+        open={confirming}
+        title="Confirm payment"
+        confirmLabel="Make payment"
+        onConfirm={() => void execute()}
+        onCancel={() => setConfirming(false)}
+      >
+        <p>
+          Pay <strong className="text-cf-text">{formatKes(Number(amount))}</strong> toward{" "}
+          <strong className="text-cf-text">{liability.name}</strong> from{" "}
+          <strong className="text-cf-text">{account?.name ?? "selected account"}</strong>?
+        </p>
+        {useLoop && (
+          <p className="mt-2 text-xs">
+            This will send via LOOP paybill <strong className="text-cf-text">{paybill}</strong>.
+          </p>
+        )}
+      </ConfirmModal>
 
-      <label className="flex items-center gap-2 text-sm text-cf-muted">
-        <input
-          type="checkbox"
-          checked={useLoop}
-          onChange={(e) => setUseLoop(e.target.checked)}
-          className="rounded border-cf-border"
-        />
-        Send the money through LOOP paybill
-      </label>
-
-      {useLoop && (
+      <form onSubmit={handleSubmit} className="cf-card mt-2 space-y-3 p-5">
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block space-y-1.5 text-sm">
-            <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Paybill</span>
-            <input
-              required
-              value={paybill}
-              onChange={(e) => setPaybill(e.target.value)}
-              placeholder="888880"
-              className={field}
-            />
+            <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Pay from</span>
+            <select value={accountId} onChange={(e) => setAccountId(e.target.value)} className={field}>
+              {data.accounts.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name} — {formatKes(a.balance)}
+                </option>
+              ))}
+            </select>
           </label>
           <label className="block space-y-1.5 text-sm">
-            <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">
-              Account number
-            </span>
+            <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Amount (KES)</span>
             <input
+              type="number"
+              step="0.01"
               required
-              value={accountNumber}
-              onChange={(e) => setAccountNumber(e.target.value)}
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
               className={field}
             />
           </label>
         </div>
-      )}
 
-      {error && <p className="text-sm text-cf-danger">{error}</p>}
-      {done && <p className="text-sm text-cf-success">{done}</p>}
+        <label className="flex items-center gap-2 text-sm text-cf-muted">
+          <input
+            type="checkbox"
+            checked={useLoop}
+            onChange={(e) => setUseLoop(e.target.checked)}
+            className="rounded border-cf-border"
+          />
+          Send the money through LOOP paybill
+        </label>
 
-      <button
-        type="submit"
-        disabled={busy}
-        className="rounded-full bg-gradient-to-r from-cf-primary to-cf-primary-deep px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
-      >
-        {busy ? "Paying…" : "Make payment"}
-      </button>
-    </form>
+        {useLoop && (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block space-y-1.5 text-sm">
+              <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Paybill</span>
+              <input
+                required
+                value={paybill}
+                onChange={(e) => setPaybill(e.target.value)}
+                placeholder="888880"
+                className={field}
+              />
+            </label>
+            <label className="block space-y-1.5 text-sm">
+              <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">
+                Account number
+              </span>
+              <input
+                required
+                value={accountNumber}
+                onChange={(e) => setAccountNumber(e.target.value)}
+                className={field}
+              />
+            </label>
+          </div>
+        )}
+
+        {error && <p className="text-sm text-cf-danger">{error}</p>}
+
+        <button
+          type="submit"
+          disabled={busy}
+          className="rounded-full bg-gradient-to-r from-cf-primary to-cf-primary-deep px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+        >
+          {busy ? "Paying…" : "Make payment"}
+        </button>
+      </form>
+    </>
   );
 }
 

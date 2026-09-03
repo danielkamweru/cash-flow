@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Figtree, Space_Grotesk } from "next/font/google";
 import { ThemeProvider } from "@/lib/context/ThemeContext";
 import { AuthProvider } from "@/lib/context/AuthContext";
+import { ToastProvider } from "@/components/ui/Toast";
 import "./globals.css";
 
 const display = Space_Grotesk({
@@ -60,7 +61,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="min-h-full bg-cf-bg font-sans text-cf-text transition-colors duration-200">
         <ThemeProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

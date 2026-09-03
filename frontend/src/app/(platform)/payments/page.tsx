@@ -20,6 +20,9 @@ import { useEntity, useEntityData } from "@/lib/context/EntityContext";
 import { cn } from "@/lib/format";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { PinInput } from "@/components/ui/PasswordInput";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { useToast } from "@/components/ui/Toast";
+import { friendlyError } from "@/lib/friendlyError";
 
 function Field({
   label,
@@ -140,10 +143,12 @@ function ProductDetail({
   const [form, setForm] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<unknown>(null);
   const [live, setLive] = useState(false);
   const [pin, setPin] = useState("");
+  const toast = useToast();
   const canLive = configured && tillReady;
 
   // A live run posts to the ledger, so tell the backend which account it hits.
@@ -178,13 +183,16 @@ function ProductDetail({
       setError("Enter your 4-digit transaction PIN to send money live.");
       return;
     }
-
+    // Show confirmation before any live financial send
+    if (live && canLive && !confirming) {
+      setConfirming(true);
+      return;
+    }
+    setConfirming(false);
     setSubmitting(true);
     setError(null);
     setResult(null);
     try {
-      // Sent for simulated runs too — the backend records those as `demo`
-      // provenance so the Transactions tab reflects what you just did.
       const body: Record<string, unknown> = {
         ...form,
         entityId: snapshot.entity.id,
@@ -195,13 +203,26 @@ function ProductDetail({
       if (outcome.history) setHistory(outcome.history);
       setResult(outcome.result ?? outcome);
       if (!outcome.success) {
-        setError(outcome.message ?? "Simulation failed");
+        const msg = friendlyError(
+          outcome.message ?? "Simulation failed",
+          "Unable to complete the transaction. Please try again.",
+        );
+        setError(msg);
+        toast(msg, "error");
       } else {
         setPin("");
+        toast(
+          live && canLive
+            ? "Transaction submitted successfully."
+            : "Simulation completed successfully.",
+          "success",
+        );
         onLedgerChange?.();
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Request failed");
+      const msg = friendlyError(e, "Unable to complete the transaction. Please try again.");
+      setError(msg);
+      toast(msg, "error");
     } finally {
       setSubmitting(false);
     }
@@ -228,6 +249,24 @@ function ProductDetail({
 
   return (
     <div className="space-y-6">
+      <ConfirmModal
+        open={confirming}
+        title="Confirm live transaction"
+        confirmLabel={needsPin ? "Confirm & send" : "Confirm"}
+        onConfirm={() => void onSimulate()}
+        onCancel={() => setConfirming(false)}
+      >
+        <p>
+          You are about to run a <strong className="text-cf-text">live</strong>{" "}
+          {detail?.name.toLowerCase()} on the LOOP sandbox gateway.
+          {needsPin && " Your transaction PIN will be used to authorise this send."}
+        </p>
+        {form.amount && (
+          <p className="mt-2">
+            Amount: <strong className="text-cf-text">{form.amount}</strong>
+          </p>
+        )}
+      </ConfirmModal>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <button
