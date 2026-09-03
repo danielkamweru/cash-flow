@@ -5,6 +5,7 @@ import { RecommendationHero, WealthHealthBadge } from "@/components/financial/Re
 import { SafeSurplusPanel } from "@/components/financial/SafeSurplusPanel";
 import { TrafficLightHome } from "@/components/financial/TrafficLightHome";
 import { PersonalAutomationFlow } from "@/components/financial/PersonalAutomationFlow";
+import { SpendingInsights } from "@/components/financial/SpendingInsights";
 import { GoalCard } from "@/components/financial/Cards";
 import { PageHeader, StatusPill } from "@/components/ui/primitives";
 import { SkeletonCard } from "@/components/ui/Skeleton";
@@ -234,6 +235,9 @@ export default function DashboardPage() {
         onPreset={handlePreset}
         onRange={(s, e) => setRange([s, e])}
       />
+
+      {/* Spending insights — tasks 19, 20, 21 */}
+      <SpendingInsights transactions={data.transactions} />
 
       {/* Coach section */}
       {isPersonal && (
