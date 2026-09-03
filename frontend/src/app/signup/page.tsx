@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import { ArrowRight, KeyRound, Lock, Mail, Phone, Shield, TrendingUp, User } from "lucide-react";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { useAuth } from "@/lib/context/AuthContext";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 
@@ -138,18 +139,15 @@ export default function SignUpPage() {
             </label>
             <label className="block space-y-1.5">
               <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Password</span>
-              <span className="relative flex">
-                <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-cf-muted" />
-                <input
-                  type="password"
-                  required
-                  minLength={6}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-xl border border-cf-border bg-cf-bg px-10 py-3 text-sm outline-none ring-cf-primary/40 focus:ring-2"
-                  placeholder="At least 6 characters"
-                />
-              </span>
+              <PasswordInput
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-xl border border-cf-border bg-cf-bg py-3 text-sm outline-none ring-cf-primary/40 focus:ring-2"
+                placeholder="At least 6 characters"
+                leftIcon={<Lock className="h-4 w-4" />}
+              />
             </label>
 
             <div className="rounded-2xl border border-cf-primary/25 bg-cf-primary/5 p-4">

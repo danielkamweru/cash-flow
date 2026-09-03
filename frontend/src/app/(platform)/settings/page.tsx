@@ -8,6 +8,7 @@ import { useEntityData } from "@/lib/context/EntityContext";
 import { useTheme } from "@/lib/context/ThemeContext";
 import { cn } from "@/lib/format";
 import { ShieldCheck } from "lucide-react";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { useEffect, useState } from "react";
 
 /** Sets the 4-digit PIN required for M-Pesa and Pesalink send-money. */
@@ -108,13 +109,12 @@ function TransactionPinCard({ hasPin, onSaved }: { hasPin: boolean; onSaved: () 
           <span className="block text-xs font-medium uppercase tracking-wide text-cf-muted">
             Confirm with your account password
           </span>
-          <input
+          <PasswordInput
             required
-            type="password"
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className={field}
+            className="w-full rounded-xl border border-cf-border bg-cf-surface-2 px-3 py-2.5 text-sm text-cf-text outline-none focus:border-cf-primary/50"
           />
         </label>
 
