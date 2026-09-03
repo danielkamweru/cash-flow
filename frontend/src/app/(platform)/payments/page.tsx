@@ -40,7 +40,7 @@ function Field({
 }
 
 function inputClass() {
-  return "w-full rounded-xl border border-cf-border bg-cf-surface-2 px-3 py-2.5 text-sm text-cf-text outline-none focus:border-cf-primary/50";
+  return "w-full rounded-xl border border-cf-border bg-cf-surface-2 px-3 py-3 text-sm text-cf-text outline-none focus:border-cf-primary/50 sm:py-2.5";
 }
 
 function ResultPanel({ value }: { value: unknown }) {
@@ -312,6 +312,7 @@ function ProductDetail({
                 <Field key={f.key} label={f.label}>
                   <input
                     className={inputClass()}
+                    inputMode={f.key === "amount" || f.key.toLowerCase().includes("amount") ? "decimal" : f.key.toLowerCase().includes("phone") || f.key.toLowerCase().includes("mobile") || f.key.toLowerCase().includes("number") ? "tel" : undefined}
                     value={form[f.key] ?? ""}
                     onChange={(e) => setForm((prev) => ({ ...prev, [f.key]: e.target.value }))}
                   />

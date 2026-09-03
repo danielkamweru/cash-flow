@@ -4,7 +4,7 @@ import { PageHeader, StatusPill } from "@/components/ui/primitives";
 import { apiDownload, apiGet } from "@/lib/api/client";
 import { transactionInquiry } from "@/lib/api/loop";
 import { useEntityData } from "@/lib/context/EntityContext";
-import { cn, formatDate, formatKes } from "@/lib/format";
+import { cn, formatDate, formatKes, mpesaLabel } from "@/lib/format";
 import type { Transaction } from "@/lib/types";
 import { Download, FileSpreadsheet, FileText, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -153,8 +153,9 @@ export default function TransactionsPage() {
         subtitle="Inflows and outflows power cash-flow analysis and surplus detection."
       />
 
-      <section className="cf-card space-y-4 p-5">
-        <div className="flex flex-wrap items-end gap-3">
+      <section className="cf-card space-y-4 p-4 sm:p-5">
+        {/* Date pickers — full width on mobile, inline on sm+ */}
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-end sm:gap-3">
           <label className="space-y-1.5 text-sm">
             <span className="block text-xs font-medium uppercase tracking-wide text-cf-muted">From</span>
             <input
@@ -162,7 +163,7 @@ export default function TransactionsPage() {
               value={start}
               max={end || undefined}
               onChange={(e) => setStart(e.target.value)}
-              className="rounded-xl border border-cf-border bg-cf-surface-2 px-3 py-2 text-sm text-cf-text outline-none focus:border-cf-primary/50"
+              className="w-full rounded-xl border border-cf-border bg-cf-surface-2 px-3 py-3 text-sm text-cf-text outline-none focus:border-cf-primary/50 sm:w-auto sm:py-2"
             />
           </label>
           <label className="space-y-1.5 text-sm">
@@ -172,65 +173,64 @@ export default function TransactionsPage() {
               value={end}
               min={start || undefined}
               onChange={(e) => setEnd(e.target.value)}
-              className="rounded-xl border border-cf-border bg-cf-surface-2 px-3 py-2 text-sm text-cf-text outline-none focus:border-cf-primary/50"
+              className="w-full rounded-xl border border-cf-border bg-cf-surface-2 px-3 py-3 text-sm text-cf-text outline-none focus:border-cf-primary/50 sm:w-auto sm:py-2"
             />
           </label>
+        </div>
 
-          <div className="flex flex-wrap gap-1.5">
-            {PRESETS.map((p) => (
-              <button
-                key={p.label}
-                type="button"
-                onClick={() => {
-                  const [s, e] = p.range();
-                  setStart(s);
-                  setEnd(e);
-                }}
-                className="rounded-full border border-cf-border px-3 py-1.5 text-xs font-medium text-cf-muted transition-colors hover:border-cf-primary/40 hover:text-cf-text"
-              >
-                {p.label}
-              </button>
-            ))}
+        {/* Preset chips — scrollable row on mobile */}
+        <div className="flex gap-1.5 overflow-x-auto pb-0.5 sm:flex-wrap sm:overflow-visible">
+          {PRESETS.map((p) => (
             <button
+              key={p.label}
               type="button"
               onClick={() => {
-                setStart("");
-                setEnd("");
+                const [s, e] = p.range();
+                setStart(s);
+                setEnd(e);
               }}
-              className="rounded-full border border-cf-border px-3 py-1.5 text-xs font-medium text-cf-muted transition-colors hover:border-cf-primary/40 hover:text-cf-text"
+              className="shrink-0 rounded-full border border-cf-border px-3 py-2 text-xs font-medium text-cf-muted transition-colors hover:border-cf-primary/40 hover:text-cf-text sm:py-1.5"
             >
-              All time
+              {p.label}
             </button>
-          </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => { setStart(""); setEnd(""); }}
+            className="shrink-0 rounded-full border border-cf-border px-3 py-2 text-xs font-medium text-cf-muted transition-colors hover:border-cf-primary/40 hover:text-cf-text sm:py-1.5"
+          >
+            All time
+          </button>
+        </div>
 
-          <div className="ml-auto flex gap-2">
-            <button
-              type="button"
-              onClick={() => void onExport("xlsx")}
-              disabled={exporting !== null}
-              className="inline-flex items-center gap-2 rounded-full border border-cf-border px-4 py-2 text-xs font-semibold text-cf-text transition-colors hover:border-cf-primary/40 disabled:opacity-60"
-            >
-              {exporting === "xlsx" ? (
-                <Download className="h-3.5 w-3.5 animate-pulse" />
-              ) : (
-                <FileSpreadsheet className="h-3.5 w-3.5 text-cf-success" />
-              )}
-              Excel
-            </button>
-            <button
-              type="button"
-              onClick={() => void onExport("pdf")}
-              disabled={exporting !== null}
-              className="inline-flex items-center gap-2 rounded-full border border-cf-border px-4 py-2 text-xs font-semibold text-cf-text transition-colors hover:border-cf-primary/40 disabled:opacity-60"
-            >
-              {exporting === "pdf" ? (
-                <Download className="h-3.5 w-3.5 animate-pulse" />
-              ) : (
-                <FileText className="h-3.5 w-3.5 text-cf-danger" />
-              )}
-              PDF
-            </button>
-          </div>
+        {/* Export buttons */}
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => void onExport("xlsx")}
+            disabled={exporting !== null}
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-cf-border px-4 py-2.5 text-xs font-semibold text-cf-text transition-colors hover:border-cf-primary/40 disabled:opacity-60 sm:flex-none sm:py-2"
+          >
+            {exporting === "xlsx" ? (
+              <Download className="h-3.5 w-3.5 animate-pulse" />
+            ) : (
+              <FileSpreadsheet className="h-3.5 w-3.5 text-cf-success" />
+            )}
+            Excel
+          </button>
+          <button
+            type="button"
+            onClick={() => void onExport("pdf")}
+            disabled={exporting !== null}
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-cf-border px-4 py-2.5 text-xs font-semibold text-cf-text transition-colors hover:border-cf-primary/40 disabled:opacity-60 sm:flex-none sm:py-2"
+          >
+            {exporting === "pdf" ? (
+              <Download className="h-3.5 w-3.5 animate-pulse" />
+            ) : (
+              <FileText className="h-3.5 w-3.5 text-cf-danger" />
+            )}
+            PDF
+          </button>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-3">
@@ -285,10 +285,17 @@ export default function TransactionsPage() {
                   <tr key={t.id} className="border-b border-cf-border/70">
                     <td className="whitespace-nowrap px-3 py-3 text-cf-muted sm:px-4">{formatDate(t.date)}</td>
                     <td className="px-3 py-3 sm:px-4">
-                      <p className="max-w-[220px] truncate text-cf-text sm:max-w-none sm:whitespace-normal">
+                      <p className="max-w-[200px] truncate text-cf-text sm:max-w-none sm:whitespace-normal">
                         {t.description}
                       </p>
-                      <StatusPill status={t.provenance} />
+                      <div className="mt-0.5 flex flex-wrap items-center gap-1">
+                        <StatusPill status={t.provenance} />
+                        {mpesaLabel(t.description, t.category) && (
+                          <span className="rounded-md bg-cf-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-cf-primary">
+                            {mpesaLabel(t.description, t.category)}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-3 py-3 text-cf-muted sm:px-4">{t.category}</td>
                     <td className="px-3 py-3 sm:px-4">

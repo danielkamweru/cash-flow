@@ -52,7 +52,7 @@ function FundPanel({ goal, onDone }: { goal: Goal; onDone: () => void }) {
   const [error, setError] = useState<string | null>(null);
 
   const field =
-    "w-full rounded-xl border border-cf-border bg-cf-surface-2 px-3 py-2.5 text-sm text-cf-text outline-none focus:border-cf-primary/50";
+    "w-full rounded-xl border border-cf-border bg-cf-surface-2 px-3 py-3 text-sm text-cf-text outline-none focus:border-cf-primary/50 sm:py-2.5";
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -114,6 +114,7 @@ function FundPanel({ goal, onDone }: { goal: Goal; onDone: () => void }) {
             <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Amount (KES)</span>
             <input
               type="number"
+              inputMode="decimal"
               step="0.01"
               required
               value={amount}

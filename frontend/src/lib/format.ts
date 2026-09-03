@@ -6,11 +6,34 @@ export function formatKes(amount: number, opts?: { compact?: boolean; signed?: b
         maximumFractionDigits: abs >= 100_000 ? 1 : 0,
       }).format(abs)
     : new Intl.NumberFormat("en-KE", {
-        maximumFractionDigits: 0,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
       }).format(abs);
 
-  const sign = opts?.signed ? (amount > 0 ? "+" : amount < 0 ? "−" : "") : amount < 0 ? "−" : "";
-  return `${sign}KES ${formatted}`;
+  const sign = opts?.signed ? (amount > 0 ? "+" : amount < 0 ? "\u2212" : "") : amount < 0 ? "\u2212" : "";
+  return `${sign}KSh\u00a0${formatted}`;
+}
+
+/**
+ * Detects common Kenyan M-Pesa / mobile-money transaction patterns and returns
+ * a short human-readable label. Returns null when no pattern matches.
+ */
+export function mpesaLabel(description: string, category?: string): string | null {
+  const d = description.toLowerCase();
+  const c = (category ?? "").toLowerCase();
+  if (/\bairtime\b/.test(d) || /\bairtime\b/.test(c)) return "Airtime";
+  if (/\bb2c\b|\bcash\s*out\b|\bwithdraw/.test(d)) return "M-Pesa Withdrawal";
+  if (/\bdeposit\b/.test(d) && /mpesa|m-pesa/.test(d)) return "M-Pesa Deposit";
+  if (/\bdeposit\b/.test(d)) return "Deposit";
+  if (/send\s*money|\btransfer\b/.test(d) && /mpesa|m-pesa/.test(d)) return "M-Pesa Transfer";
+  if (/\bpaybill\b/.test(d)) return "Paybill";
+  if (/\btill\b|\bbuy\s*goods\b/.test(d)) return "Till Payment";
+  if (/\bpesalink\b/.test(d)) return "PesaLink Transfer";
+  if (/\bloop\b/.test(d)) return "LOOP Transfer";
+  if (/\bsalary\b|\bpayroll\b/.test(d)) return "Salary";
+  if (/\brent\b/.test(d)) return "Rent";
+  if (/\butility\b|\bkplc\b|\bnairobi\s*water\b/.test(d)) return "Utility";
+  return null;
 }
 
 export function formatPercent(value: number, digits = 0): string {

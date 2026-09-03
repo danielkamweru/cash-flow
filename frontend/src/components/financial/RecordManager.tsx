@@ -22,7 +22,7 @@ export type FieldSpec = {
 type Values = Record<string, string | number | boolean>;
 
 const inputClass =
-  "w-full rounded-xl border border-cf-border bg-cf-surface-2 px-3 py-2.5 text-sm text-cf-text outline-none focus:border-cf-primary/50";
+  "w-full rounded-xl border border-cf-border bg-cf-surface-2 px-3 py-3 text-sm text-cf-text outline-none focus:border-cf-primary/50 sm:py-2.5";
 
 function Form({
   fields,
@@ -88,6 +88,7 @@ function Form({
           ) : (
             <input
               type={f.kind === "number" ? "number" : f.kind === "date" ? "date" : "text"}
+              inputMode={f.kind === "number" ? "decimal" : undefined}
               step={f.step ?? (f.kind === "number" ? "0.01" : undefined)}
               required={f.required ?? true}
               placeholder={f.placeholder}
