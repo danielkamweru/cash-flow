@@ -8,11 +8,10 @@ def normalize_database_url(url: str) -> str:
     """Render/Heroku use postgres://; SQLAlchemy + psycopg need postgresql+psycopg://."""
     value = (url or "").strip()
     if value.startswith("postgres://"):
-        value = "postgresql+psycopg://" + value[len("postgres://") :]
+        value = "postgresql+psycopg://" + value[len("postgres://"):]
     elif value.startswith("postgresql://") and "+psycopg" not in value:
-        value = "postgresql+psycopg://" + value[len("postgresql://") :]
+        value = "postgresql+psycopg://" + value[len("postgresql://"):]
 
-    # Managed Postgres (Render, etc.) generally requires TLS
     local = "localhost" in value or "127.0.0.1" in value
     if value and not local and "sslmode=" not in value:
         value += ("&" if "?" in value else "?") + "sslmode=require"
@@ -27,23 +26,57 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     port: int = 8000
-    database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/wealthloop"
-    # Comma-separated list, e.g. https://app.vercel.app,http://localhost:3000
+    database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/cashflow"
     cors_origin: str = "http://localhost:3000"
-    # Optional regex for Vercel preview deployments, e.g. https://.*\\.vercel\\.app
     cors_origin_regex: str = ""
-    jwt_secret: str = "wealth-loop-dev-secret-change-me"
+    jwt_secret: str = "cash-flow-dev-secret-change-me"
     jwt_expire_hours: int = 72
 
-    loop_base_url: str = "https://sandbox.loop.co.ke"
-    loop_gateway_base_url: str = "https://sandbox.loop.co.ke/gateway"
-    # LOOP requires https callBackUrl — localhost http is rejected with 412
-    loop_callback_base_url: str = "https://httpbin.org"
-    loop_consumer_key: str = ""
-    loop_consumer_secret: str = ""
-    loop_default_till: str = "133239"
-    loop_default_till_secret: str = ""
+    # ------------------------------------------------------------------
+    # Safaricom Daraja M-Pesa
+    # ------------------------------------------------------------------
+    daraja_consumer_key: str = ""
+    daraja_consumer_secret: str = ""
+    daraja_shortcode: str = ""
+    daraja_passkey: str = ""
+    daraja_auth_url: str = (
+        "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+    )
+    daraja_stk_push_url: str = (
+        "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
+    )
+    # Must be a publicly reachable HTTPS URL for Safaricom to POST callbacks.
+    # Use a tunnel (e.g. ngrok) in local development.
+    daraja_callback_url: str = ""
 
+    # ------------------------------------------------------------------
+    # Safaricom Daraja M-Pesa Dynamic QR
+    # ------------------------------------------------------------------
+    daraja_qr_url: str = (
+        "https://sandbox.safaricom.co.ke/mpesa/qrcode/v1/generate"
+    )
+
+    # ------------------------------------------------------------------
+    # Safaricom Daraja Business Buy Goods (B2B)
+    # ------------------------------------------------------------------
+    daraja_b2b_url: str = (
+        "https://sandbox.safaricom.co.ke/mpesa/b2b/v1/paymentrequest"
+    )
+    # API operator username (initiator)
+    daraja_b2b_initiator: str = ""
+    # Encrypted SecurityCredential from Daraja portal
+    daraja_b2b_security_credential: str = ""
+    # Shortcode sending funds (usually same as daraja_shortcode for paybill)
+    daraja_b2b_party_a: str = ""
+    # Default recipient shortcode (merchant/till/paybill receiving funds)
+    daraja_b2b_party_b: str = ""
+    # Public HTTPS callbacks Daraja can reach — use a tunnel (ngrok) for local dev
+    daraja_b2b_queue_timeout_url: str = ""
+    daraja_b2b_result_url: str = ""
+
+    # ------------------------------------------------------------------
+    # Optional integrations
+    # ------------------------------------------------------------------
     supabase_url: str = ""
     supabase_anon_key: str = ""
     supabase_service_role_key: str = ""
@@ -58,17 +91,27 @@ class Settings(BaseSettings):
         origins = parse_cors_origins(self.cors_origin)
         return origins or ["http://localhost:3000"]
 
+    @property
+    def daraja_configured(self) -> bool:
+        return bool(
+            self.daraja_consumer_key.strip()
+            and self.daraja_consumer_secret.strip()
+            and self.daraja_shortcode.strip()
+            and self.daraja_passkey.strip()
+        )
+
+    @property
+    def daraja_b2b_configured(self) -> bool:
+        return bool(
+            self.daraja_consumer_key.strip()
+            and self.daraja_consumer_secret.strip()
+            and self.daraja_b2b_initiator.strip()
+            and self.daraja_b2b_security_credential.strip()
+            and self.daraja_b2b_party_a.strip()
+            and self.daraja_b2b_party_b.strip()
+        )
+
 
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
-
-
-def loop_callback_url(kind: str) -> str:
-    """Build a LOOP-compliant https callBackUrl (never http://localhost)."""
-    settings = get_settings()
-    base = (settings.loop_callback_base_url or "").strip().rstrip("/")
-    path = f"/api/loop/callbacks/{kind}" if kind else ""
-    if base.lower().startswith("https://"):
-        return f"{base}{path}" if path else base
-    return "https://httpbin.org/post"
