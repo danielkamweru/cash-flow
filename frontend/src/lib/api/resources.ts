@@ -101,14 +101,13 @@ export function clearBooks(entityId: string) {
 // Acting on advisor recommendations
 // ---------------------------------------------------------------------------
 
-type LoopLeg = { channel?: string; destination?: string; accountNumber?: string; pin?: string };
+type PaymentLeg = { channel?: string; destination?: string; accountNumber?: string; pin?: string };
 
 export type InvestResult = {
   ok: boolean;
   investment: Investment;
   transaction: Transaction;
   accountBalance: number;
-  loop: { txnReference: string } | null;
 };
 
 export function invest(
@@ -119,14 +118,14 @@ export function invest(
     instrument: string;
     investmentId?: string;
     name?: string;
-  } & LoopLeg,
+  } & PaymentLeg,
 ) {
   return apiPost<InvestResult>(`${base(entityId)}/actions/invest`, body);
 }
 
 export function fundGoal(
   entityId: string,
-  body: { accountId: string; goalId: string; amount: number } & LoopLeg,
+  body: { accountId: string; goalId: string; amount: number } & PaymentLeg,
 ) {
   return apiPost<{ ok: boolean; goal: Goal; transaction: Transaction; accountBalance: number }>(
     `${base(entityId)}/actions/fund-goal`,
@@ -136,7 +135,7 @@ export function fundGoal(
 
 export function payDebt(
   entityId: string,
-  body: { accountId: string; liabilityId: string; amount: number } & LoopLeg,
+  body: { accountId: string; liabilityId: string; amount: number } & PaymentLeg,
 ) {
   return apiPost<{ ok: boolean; liability: Liability; transaction: Transaction; accountBalance: number }>(
     `${base(entityId)}/actions/pay-debt`,

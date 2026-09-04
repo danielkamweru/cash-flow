@@ -1,6 +1,6 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api";
 
-const TOKEN_KEY = "wealth-loop-token";
+const TOKEN_KEY = "cash-flow-token";
 
 export function getAuthToken(): string | null {
   if (typeof window === "undefined") return null;
@@ -52,8 +52,23 @@ export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
     handleUnauthorized(res.status);
     let message = `API ${path} failed (${res.status})`;
     try {
-      const data = (await res.json()) as { error?: string; detail?: { error?: string } };
-      message = data.error || data.detail?.error || message;
+      const data = (await res.json()) as Record<string, unknown>;
+      if (typeof data.error === "string") {
+        message = data.error;
+      } else if (Array.isArray(data.detail) && data.detail.length > 0) {
+        const first = data.detail[0] as Record<string, unknown>;
+        if (typeof first.msg === "string") {
+          message = first.msg;
+        } else if (typeof first.error === "string") {
+          message = first.error;
+        } else {
+          message = JSON.stringify(first);
+        }
+      } else if (typeof data.detail === "string") {
+        message = data.detail;
+      } else if (typeof data.message === "string") {
+        message = data.message;
+      }
     } catch {
       /* ignore */
     }

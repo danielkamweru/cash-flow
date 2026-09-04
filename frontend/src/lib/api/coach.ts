@@ -17,9 +17,9 @@ export async function setPersonalAutomation(enabled: boolean) {
   }>("/coach/personal/automation", { enabled });
 }
 
-export async function executeLoopAction(actionId: string) {
+export async function executePaymentAction(actionId: string) {
   return apiPost<{ success: boolean; data: PersonalCoachHome; message: string }>(
-    `/coach/personal/loop-actions/${encodeURIComponent(actionId)}/execute`,
+    `/coach/personal/payment-actions/${encodeURIComponent(actionId)}/execute`,
     { confirm: true },
   );
 }

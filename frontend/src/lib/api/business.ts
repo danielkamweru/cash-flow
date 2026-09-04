@@ -18,7 +18,7 @@ export type Invoice = {
   daysOverdue: number;
   notes: string | null;
   lineItems: { desc?: string; qty?: number; price?: number }[];
-  loopTxnReference: string | null;
+  paymentReference: string | null;
 };
 
 export type Ageing = {
@@ -47,7 +47,7 @@ export const updateSupplier = (
 export const deleteSupplier = (entityId: string, id: string) =>
   apiDelete<{ ok: boolean }>(`${base(entityId)}/suppliers/${id}`);
 
-/** Settles a supplier over LOOP — Pay to Paybill or Pay to M-Pesa Till. */
+/** Settles a supplier from an account. */
 export const paySupplier = (
   entityId: string,
   id: string,
@@ -64,7 +64,6 @@ export const paySupplier = (
     supplier: Supplier;
     transaction: Transaction;
     accountBalance: number;
-    loop: { txnReference: string };
   }>(`${base(entityId)}/suppliers/${id}/pay`, body);
 
 // ---- invoices --------------------------------------------------------------
@@ -89,17 +88,17 @@ export const updateInvoice = (entityId: string, id: string, body: Partial<Invoic
 export const deleteInvoice = (entityId: string, id: string) =>
   apiDelete<{ ok: boolean }>(`${base(entityId)}/invoices/${id}`);
 
-/** Pushes an STK or LOOP prompt at the customer to collect what they owe. */
+/** Pushes an M-Pesa STK prompt at the customer to collect what they owe. */
 export const collectInvoice = (
   entityId: string,
   id: string,
-  body: { accountId: string; channel?: "mpesa" | "loop"; amount?: number; phone?: string },
+  body: { accountId: string; channel?: "mpesa"; amount?: number; phone?: string },
 ) =>
   apiPost<{
     ok: boolean;
     invoice: Invoice;
     transaction: Transaction;
-    loop: { txnReference: string; message: string | null };
+    payment: { checkoutRequestId: string; message: string | null };
   }>(`${base(entityId)}/invoices/${id}/collect`, body);
 
 /** Marks part or all of an invoice settled — for cash or off-platform payments. */
