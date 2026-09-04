@@ -27,7 +27,7 @@ type EntityContextValue = {
 
 const EntityContext = createContext<EntityContextValue | null>(null);
 
-const ENTITY_TYPE_KEY = "wealthloop.entityType";
+const ENTITY_TYPE_KEY = "cashflow.entityType";
 
 function initialEntityType(): "PERSONAL" | "BUSINESS" {
   if (typeof window === "undefined") return "PERSONAL";

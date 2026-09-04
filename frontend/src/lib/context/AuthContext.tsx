@@ -16,14 +16,12 @@ import {
   signIn as apiSignIn,
   signOut as apiSignOut,
   signUp as apiSignUp,
-  type LoopAuthorization,
 } from "@/lib/api/auth";
 import { getAuthToken } from "@/lib/api/client";
 import type { ApiUser } from "@/lib/api/types";
 
 type AuthContextValue = {
   user: ApiUser | null;
-  loopAuthorization: LoopAuthorization | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (input: {
@@ -41,7 +39,6 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<ApiUser | null>(null);
-  const [loopAuthorization, setLoopAuthorization] = useState<LoopAuthorization | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   // Prevent double-redirect if multiple 401s fire simultaneously
@@ -51,18 +48,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const token = getAuthToken();
     if (!token) {
       setUser(null);
-      setLoopAuthorization(null);
       setLoading(false);
       return;
     }
     try {
       const me = await fetchMe();
       setUser(me.user);
-      setLoopAuthorization(me.loopAuthorization);
     } catch {
       apiSignOut();
       setUser(null);
-      setLoopAuthorization(null);
     } finally {
       setLoading(false);
     }
@@ -79,7 +73,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       expiredRef.current = true;
       apiSignOut();
       setUser(null);
-      setLoopAuthorization(null);
       router.replace("/signin?reason=expired");
     }
     window.addEventListener("auth:expired", onExpired);
@@ -89,7 +82,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = useCallback(async (email: string, password: string) => {
     const data = await apiSignIn({ email, password });
     setUser(data.user);
-    setLoopAuthorization(data.loopAuthorization);
   }, []);
 
   const signUp = useCallback(
@@ -102,7 +94,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }) => {
       const data = await apiSignUp(input);
       setUser(data.user);
-      setLoopAuthorization(data.loopAuthorization);
     },
     [],
   );
@@ -110,12 +101,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(() => {
     apiSignOut();
     setUser(null);
-    setLoopAuthorization(null);
   }, []);
 
   const value = useMemo(
-    () => ({ user, loopAuthorization, loading, signIn, signUp, signOut, refresh }),
-    [user, loopAuthorization, loading, signIn, signUp, signOut, refresh],
+    () => ({ user, loading, signIn, signUp, signOut, refresh }),
+    [user, loading, signIn, signUp, signOut, refresh],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
