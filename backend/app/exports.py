@@ -202,7 +202,7 @@ def build_pdf(
     story.append(Spacer(1, 6 * mm))
     story.append(
         Paragraph(
-            "Wealth Loop statement for personal record-keeping. Not a bank statement or tax document.",
+            "Cash-Flow statement for personal record-keeping. Not a bank statement or tax document.",
             meta_style,
         )
     )

@@ -507,7 +507,7 @@ def _investment_advice(entity_id: str, safe_to_invest: float, db: Session, autom
     autonomous = bool(automation_enabled and allocations)
     if autonomous:
         plain += (
-            " Automation is ON — Wealth Loop will route this surplus using these ranked picks "
+            " Automation is ON — Cash-Flow will route this surplus using these ranked picks "
             "(demo orchestration; no live broker yet)."
         )
         automation_status = "autonomous"
@@ -531,19 +531,19 @@ def _investment_advice(entity_id: str, safe_to_invest: float, db: Session, autom
     }
 
 
-def _loop_actions(entity_id: str, unpaid_bills: list[dict[str, Any]], db: Session) -> list[dict[str, Any]]:
+def _payment_actions(entity_id: str, unpaid_bills: list[dict[str, Any]], db: Session) -> list[dict[str, Any]]:
     actions = []
     for b in unpaid_bills:
         if b["status"] == "overdue" or (b["daysUntilDue"] is not None and b["daysUntilDue"] <= 3):
             actions.append(
                 {
                     "actionId": f"pay-{b['id']}",
-                    "loopProduct": "pay-to-paybill",
+                    "paymentMethod": "mpesa-stk-push",
                     "title": f"Pay {b['name']} now",
                     "plainReason": f"{b['name']} is due soon. Paying now avoids penalties.",
                     "amount": b["amount"],
                     "billId": b["id"],
-                    "endpointHint": "/api/loop/pay/paybill",
+                    "endpointHint": "/api/mpesa/stk-push",
                     "blockedReason": None,
                 }
             )
@@ -551,7 +551,7 @@ def _loop_actions(entity_id: str, unpaid_bills: list[dict[str, Any]], db: Sessio
             actions.append(
                 {
                     "actionId": f"remind-{b['id']}",
-                    "loopProduct": "none",
+                    "paymentMethod": "none",
                     "title": f"Remember {b['name']}",
                     "plainReason": f"{b['name']} is coming up in {b['daysUntilDue']} days. Plan ahead.",
                     "amount": b["amount"],
@@ -590,7 +590,7 @@ def build_personal_coach_home(entity_id: str, db: Session, now: datetime | None 
     envelopes = _envelopes(entity_id, db, now)
     runway = _runway(entity_id, db, now)
     advice = _investment_advice(entity_id, safe_to_invest, db, automation_enabled)
-    loop_actions = _loop_actions(entity_id, unpaid, db)
+    payment_actions = _payment_actions(entity_id, unpaid, db)
 
     warnings = []
     if runway["plainShortfallMessage"]:
@@ -635,7 +635,7 @@ def build_personal_coach_home(entity_id: str, db: Session, now: datetime | None 
                 else "Recommendations only (Market Intelligence)"
             ),
         },
-        "loopActions": loop_actions,
+        "paymentActions": payment_actions,
         "warnings": warnings,
         "success": True,
     }

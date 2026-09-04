@@ -459,7 +459,7 @@ def seed(db: Session) -> None:
     )
 
     db.commit()
-    print(f"Seeded Wealth Loop demo database for {user.Name}")
+    print(f"Seeded Cash-Flow demo database for {user.Name}")
 
 
 def main() -> None:

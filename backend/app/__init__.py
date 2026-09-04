@@ -1,1 +1,1 @@
-"""Wealth Loop Python API."""
+"""Cash-Flow Python API."""

@@ -47,7 +47,7 @@ def init_db() -> None:
             )
         )
         conn.execute(text('ALTER TABLE "Transactions" ADD COLUMN IF NOT EXISTS "Metadata" jsonb'))
-        conn.execute(text('ALTER TABLE "Transactions" ADD COLUMN IF NOT EXISTS "LoopTxnReference" text'))
+        conn.execute(text('ALTER TABLE "Transactions" ADD COLUMN IF NOT EXISTS "PaymentReference" text'))
         conn.execute(
             text('ALTER TABLE "Transactions" ADD COLUMN IF NOT EXISTS "Status" text NOT NULL DEFAULT \'completed\'')
         )

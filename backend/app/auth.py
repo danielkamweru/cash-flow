@@ -76,62 +76,6 @@ def decode_token(token: str) -> dict[str, Any]:
         raise HTTPException(status_code=401, detail={"error": "Invalid or expired token"}) from exc
 
 
-def authorize_with_loop() -> dict[str, Any]:
-    """Call LOOP Authorisation (OAuth2 client_credentials) for the Wealth Loop app."""
-    settings = get_settings()
-    key = settings.loop_consumer_key.strip()
-    secret = settings.loop_consumer_secret.strip()
-    if not key or not secret:
-        return {
-            "authorized": False,
-            "provider": "LOOP",
-            "product": "Authorisation",
-            "message": "Add LOOP_CONSUMER_KEY and LOOP_CONSUMER_SECRET from https://sandbox.loop.co.ke/devportal/my-apps",
-            "myApps": "https://sandbox.loop.co.ke/devportal/my-apps",
-        }
-
-    from base64 import b64encode
-
-    credentials = b64encode(f"{key}:{secret}".encode()).decode()
-    token_url = f"{settings.loop_base_url.rstrip('/')}/oauth2/token"
-    try:
-        with httpx.Client(timeout=20.0) as client:
-            response = client.post(
-                token_url,
-                headers={"Authorization": f"Basic {credentials}"},
-                data={"grant_type": "client_credentials"},
-            )
-        if response.status_code >= 400:
-            return {
-                "authorized": False,
-                "provider": "LOOP",
-                "product": "Authorisation",
-                "message": f"LOOP Authorisation failed ({response.status_code}): {response.text[:200]}",
-                "tokenUrl": token_url,
-                "myApps": "https://sandbox.loop.co.ke/devportal/my-apps",
-            }
-        payload = response.json()
-        return {
-            "authorized": True,
-            "provider": "LOOP",
-            "product": "Authorisation",
-            "tokenType": payload.get("token_type", "Bearer"),
-            "expiresIn": payload.get("expires_in"),
-            "message": "Authorized with LOOP sandbox via OAuth2 client credentials.",
-            "tokenUrl": token_url,
-            "myApps": "https://sandbox.loop.co.ke/devportal/my-apps",
-        }
-    except Exception as exc:  # noqa: BLE001
-        return {
-            "authorized": False,
-            "provider": "LOOP",
-            "product": "Authorisation",
-            "message": f"LOOP Authorisation error: {exc}",
-            "tokenUrl": token_url,
-            "myApps": "https://sandbox.loop.co.ke/devportal/my-apps",
-        }
-
-
 def user_public(user: models.User, entities: list[models.Entity] | None = None) -> dict[str, Any]:
     entity_list = entities
     if entity_list is None:

@@ -155,7 +155,7 @@ def calculate_wealth_health(bundle: EntityBundle, surplus: dict[str, Any]) -> di
         "score": score,
         "factors": factors,
         "lastCalculated": iso(datetime.now(timezone.utc)),
-        "disclaimer": "Wealth Loop financial-health indicator. This is not a CRB score, credit bureau report, or loan approval guarantee.",
+        "disclaimer": "Cash-Flow financial-health indicator. This is not a CRB score, credit bureau report, or loan approval guarantee.",
     }
 
 
