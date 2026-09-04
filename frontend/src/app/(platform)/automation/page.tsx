@@ -235,7 +235,7 @@ function RuleCard({
                 onChange={(e) => setLive(e.target.checked)}
                 className="rounded border-cf-border"
               />
-              Live (real LOOP gateway)
+               Live (real Daraja gateway)
             </label>
             {live && (
               <input

@@ -56,7 +56,7 @@ function TransactionPinCard({ hasPin, onSaved }: { hasPin: boolean; onSaved: () 
         <div>
           <h2 className="font-display text-lg font-semibold">Transaction PIN</h2>
           <p className="mt-1 text-sm text-cf-muted">
-            Required to send money via M-Pesa or Pesalink. LOOP wallet transfers do not use it.
+            Required to send money via M-Pesa.
           </p>
         </div>
         <span

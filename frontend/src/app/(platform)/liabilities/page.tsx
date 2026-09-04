@@ -27,16 +27,13 @@ const FIELDS: FieldSpec[] = [
   },
 ];
 
-/** Pay down a liability from an account, optionally pushing the money over LOOP. */
+/** Pay down a liability from an account. */
 function RepayPanel({ liability, onDone }: { liability: Liability; onDone: () => void }) {
   const { entityId } = useEntity();
   const data = useEntityData();
   const toast = useToast();
   const [accountId, setAccountId] = useState(data.accounts[0]?.id ?? "");
   const [amount, setAmount] = useState(String(Math.min(liability.monthlyPayment, liability.balance)));
-  const [useLoop, setUseLoop] = useState(false);
-  const [paybill, setPaybill] = useState("");
-  const [accountNumber, setAccountNumber] = useState("");
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,8 +47,6 @@ function RepayPanel({ liability, onDone }: { liability: Liability; onDone: () =>
     if (!accountId) { setError("Please select an account."); return; }
     const value = Number(amount);
     if (!amount || isNaN(value) || value <= 0) { setError("Please enter a valid amount greater than zero."); return; }
-    if (useLoop && !paybill.trim()) { setError("Paybill number is required."); return; }
-    if (useLoop && !accountNumber.trim()) { setError("Account number is required."); return; }
     setConfirming(true);
   }
 
@@ -64,7 +59,6 @@ function RepayPanel({ liability, onDone }: { liability: Liability; onDone: () =>
         accountId,
         liabilityId: liability.id,
         amount: Number(amount),
-        ...(useLoop ? { channel: "paybill", destination: paybill, accountNumber } : {}),
       });
       toast(`Payment recorded. ${liability.name} balance is now ${formatKes(res.liability.balance)}.`, "success");
       onDone();
@@ -93,11 +87,6 @@ function RepayPanel({ liability, onDone }: { liability: Liability; onDone: () =>
           <strong className="text-cf-text">{liability.name}</strong> from{" "}
           <strong className="text-cf-text">{account?.name ?? "selected account"}</strong>?
         </p>
-        {useLoop && (
-          <p className="mt-2 text-xs">
-            This will send via LOOP paybill <strong className="text-cf-text">{paybill}</strong>.
-          </p>
-        )}
       </ConfirmModal>
 
       <form onSubmit={handleSubmit} className="cf-card mt-2 space-y-3 p-5">
@@ -125,42 +114,6 @@ function RepayPanel({ liability, onDone }: { liability: Liability; onDone: () =>
             />
           </label>
         </div>
-
-        <label className="flex items-center gap-2 text-sm text-cf-muted">
-          <input
-            type="checkbox"
-            checked={useLoop}
-            onChange={(e) => setUseLoop(e.target.checked)}
-            className="rounded border-cf-border"
-          />
-          Send the money through LOOP paybill
-        </label>
-
-        {useLoop && (
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="block space-y-1.5 text-sm">
-              <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Paybill</span>
-              <input
-                required
-                value={paybill}
-                onChange={(e) => setPaybill(e.target.value)}
-                placeholder="888880"
-                className={field}
-              />
-            </label>
-            <label className="block space-y-1.5 text-sm">
-              <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">
-                Account number
-              </span>
-              <input
-                required
-                value={accountNumber}
-                onChange={(e) => setAccountNumber(e.target.value)}
-                className={field}
-              />
-            </label>
-          </div>
-        )}
 
         {error && <p className="text-sm text-cf-danger">{error}</p>}
 

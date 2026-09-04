@@ -56,7 +56,7 @@ function PayPanel({
         accountNumber,
         ...(drawBnpl && active ? { bnplAgreementId: active.id } : {}),
       });
-      setDone(`Paid via LOOP. Reference ${res.loop.txnReference.slice(0, 13)}…`);
+      setDone(`Paid via M-Pesa. Reference ${res.transaction.id.slice(0, 13)}…`);
       onDone();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Payment failed");
@@ -90,7 +90,7 @@ function PayPanel({
           />
         </label>
         <label className="block space-y-1.5 text-sm">
-          <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">LOOP product</span>
+          <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Channel</span>
           <select
             value={channel}
             onChange={(e) => setChannel(e.target.value as "paybill" | "mpesa-till")}
@@ -179,7 +179,7 @@ export default function SuppliersPage() {
     <div className="mx-auto max-w-6xl space-y-6">
       <PageHeader
         title="Suppliers & payables"
-        subtitle="Who you buy from, what you still owe them, and paying it over LOOP."
+        subtitle="Who you buy from, what you still owe them, and paying it over M-Pesa."
       />
 
       <MetricCard label="Outstanding on BNPL agreements" value={owed} tone={owed > 0 ? "danger" : undefined} />

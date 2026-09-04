@@ -42,7 +42,7 @@ function CollectPanel({ invoice, onDone }: { invoice: Invoice; onDone: () => voi
   const [accountId, setAccountId] = useState(
     data.accounts.find((a) => a.provider === "mpesa")?.id ?? data.accounts[0]?.id ?? "",
   );
-  const [channel, setChannel] = useState<"mpesa" | "loop">("mpesa");
+  const [channel, setChannel] = useState<"mpesa">("mpesa");
   const [phone, setPhone] = useState(invoice.customerPhone ?? "");
   const [amount, setAmount] = useState(String(invoice.outstanding));
   const [busy, setBusy] = useState(false);
@@ -61,7 +61,7 @@ function CollectPanel({ invoice, onDone }: { invoice: Invoice; onDone: () => voi
         amount: Number(amount),
       });
       setDone(
-        `Prompt sent to ${phone}. Reference ${res.loop.txnReference.slice(0, 13)}… — the invoice settles when they pay.`,
+        `Prompt sent to ${phone}. Reference ${res.payment.checkoutRequestId.slice(0, 13)}… — the invoice settles when they pay.`,
       );
       onDone();
     } catch (err) {
@@ -88,11 +88,10 @@ function CollectPanel({ invoice, onDone }: { invoice: Invoice; onDone: () => voi
           <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Prompt type</span>
           <select
             value={channel}
-            onChange={(e) => setChannel(e.target.value as "mpesa" | "loop")}
+            onChange={(e) => setChannel(e.target.value as "mpesa")}
             className={field}
           >
             <option value="mpesa">M-Pesa STK push</option>
-            <option value="loop">LOOP request-to-pay</option>
           </select>
         </label>
         <label className="block space-y-1.5 text-sm">
@@ -227,7 +226,7 @@ export default function ReceivablesPage() {
     <div className="mx-auto max-w-6xl space-y-6">
       <PageHeader
         title="Receivables"
-        subtitle="Invoices owed to you, and collecting them with an STK or LOOP prompt."
+        subtitle="Invoices owed to you, and collecting them with an M-Pesa STK Push prompt."
       />
 
       <MetricCard

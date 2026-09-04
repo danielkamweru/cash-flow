@@ -3,7 +3,7 @@
 import { PageHeader, StatusPill } from "@/components/ui/primitives";
 import { apiGet } from "@/lib/api/client";
 import type { ApiProvider } from "@/lib/api/types";
-import { fetchLoopStatus, type LoopStatus } from "@/lib/api/loop";
+import { fetchMpesaStatus } from "@/lib/api/mpesa";
 import type { ConnectionStatus } from "@/lib/types";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -17,14 +17,14 @@ function asStatus(raw: string): ConnectionStatus {
 }
 
 export default function ConnectionsPage() {
-  const [loop, setLoop] = useState<LoopStatus | null>(null);
+  const [mpesa, setMpesa] = useState<{ provider: string; environment: string; paymentMethod: string; configured: boolean; note: string } | null>(null);
   const [providers, setProviders] = useState<ApiProvider[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void fetchLoopStatus()
-      .then(setLoop)
-      .catch(() => setLoop(null));
+    void fetchMpesaStatus()
+      .then((s) => setMpesa({ provider: s.provider, environment: s.environment, paymentMethod: s.paymentMethod, configured: s.configured, note: s.note }))
+      .catch(() => setMpesa(null));
     void apiGet<ApiProvider[]>("/providers")
       .then(setProviders)
       .catch((e) => setError(e instanceof Error ? e.message : "Failed to load providers"));
@@ -34,44 +34,47 @@ export default function ConnectionsPage() {
     <div className="mx-auto max-w-6xl space-y-6">
       <PageHeader
         title="Data connections"
-        subtitle="Provider registry from the API plus LOOP Developer Portal products."
+        subtitle="Provider registry from the API plus Safaricom Daraja payment configuration."
       />
 
       <section className="cf-card space-y-4 p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="font-display text-xl font-semibold">LOOP sandbox (NCBA)</h2>
+            <h2 className="font-display text-xl font-semibold">Safaricom Daraja sandbox</h2>
             <p className="text-sm text-cf-muted">
-              {loop?.note ?? "LOOP status endpoint unavailable — configure Consumer Key/Secret in the API."}
+              {mpesa?.note ?? "Daraja status endpoint unavailable — configure Consumer Key/Secret in the API."}
             </p>
           </div>
-          <StatusPill status={loop?.configured ? "connected" : "pending"} />
+          <StatusPill status={mpesa?.configured ? "connected" : "pending"} />
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {(loop?.products ?? []).map((p) => (
-            <div key={p.id} className="rounded-xl border border-cf-border bg-[var(--cf-inset)] p-3">
-              <div className="mb-1 flex items-center justify-between gap-2">
-                <p className="text-sm font-semibold text-cf-text">{p.name}</p>
-                <StatusPill status={p.status === "prototyped" ? "coming_soon" : "demo"} />
-              </div>
-              <p className="text-xs text-cf-muted">{p.description}</p>
-            </div>
-          ))}
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="rounded-xl border border-cf-border bg-[var(--cf-inset)] px-4 py-3">
+            <p className="text-[10px] uppercase tracking-wide text-cf-muted">Provider</p>
+            <p className="mt-1 text-sm font-semibold text-cf-text">{mpesa?.provider ?? "Safaricom Daraja"}</p>
+          </div>
+          <div className="rounded-xl border border-cf-border bg-[var(--cf-inset)] px-4 py-3">
+            <p className="text-[10px] uppercase tracking-wide text-cf-muted">Environment</p>
+            <p className="mt-1 text-sm font-semibold text-cf-text capitalize">{mpesa?.environment ?? "sandbox"}</p>
+          </div>
+          <div className="rounded-xl border border-cf-border bg-[var(--cf-inset)] px-4 py-3">
+            <p className="text-[10px] uppercase tracking-wide text-cf-muted">Payment method</p>
+            <p className="mt-1 text-sm font-semibold text-cf-text">{mpesa?.paymentMethod ?? "M-Pesa STK Push"}</p>
+          </div>
         </div>
         <div className="flex flex-wrap gap-3">
           <Link
             href="/payments"
             className="rounded-full bg-gradient-to-r from-cf-primary to-cf-primary-deep px-5 py-2.5 text-sm font-semibold text-white"
           >
-            Open LOOP Payments
+            Open M-Pesa Payments
           </Link>
           <a
-            href="https://sandbox.loop.co.ke/devportal/my-apps"
+            href="https://developer.safaricom.co.ke"
             target="_blank"
             rel="noreferrer"
             className="rounded-full border border-cf-border px-5 py-2.5 text-sm font-medium text-cf-text"
           >
-            My Apps portal
+            Daraja Developer Portal
           </a>
         </div>
       </section>

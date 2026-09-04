@@ -2,11 +2,10 @@
 
 import { PageHeader, StatusPill } from "@/components/ui/primitives";
 import { apiDownload, apiGet } from "@/lib/api/client";
-import { transactionInquiry } from "@/lib/api/loop";
 import { useEntityData } from "@/lib/context/EntityContext";
 import { cn, formatDate, formatKes, mpesaLabel } from "@/lib/format";
 import type { Transaction } from "@/lib/types";
-import { Download, FileSpreadsheet, FileText, RefreshCw } from "lucide-react";
+import { Download, FileSpreadsheet, FileText } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 const STATUS_STYLES: Record<string, string> = {
@@ -82,7 +81,6 @@ export default function TransactionsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState<"xlsx" | "pdf" | null>(null);
-  const [checking, setChecking] = useState<string | null>(null);
 
   const query = useMemo(() => {
     const params = new URLSearchParams();
@@ -119,20 +117,6 @@ export default function TransactionsPage() {
       setError(e instanceof Error ? e.message : "Export failed");
     } finally {
       setExporting(null);
-    }
-  }
-
-  /** Ask LOOP whether a pending transaction settled, then refresh the ledger. */
-  async function onCheckStatus(reference: string) {
-    setChecking(reference);
-    setError(null);
-    try {
-      await transactionInquiry({ txnReference: reference });
-      await load();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Status check failed");
-    } finally {
-      setChecking(null);
     }
   }
 
@@ -300,19 +284,6 @@ export default function TransactionsPage() {
                     <td className="px-3 py-3 text-cf-muted sm:px-4">{t.category}</td>
                     <td className="px-3 py-3 sm:px-4">
                       <TxnStatusBadge status={t.status} />
-                      {t.status === "pending" && t.loopTxnReference && (
-                        <button
-                          type="button"
-                          onClick={() => void onCheckStatus(t.loopTxnReference!)}
-                          disabled={checking === t.loopTxnReference}
-                          className="ml-2 inline-flex items-center gap-1 rounded-full border border-cf-border px-2 py-0.5 text-[10px] font-semibold text-cf-muted hover:text-cf-text disabled:opacity-60"
-                        >
-                          <RefreshCw
-                            className={cn("h-3 w-3", checking === t.loopTxnReference && "animate-spin")}
-                          />
-                          Check
-                        </button>
-                      )}
                     </td>
                     <td
                       className={cn(
