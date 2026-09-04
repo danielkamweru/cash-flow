@@ -20,7 +20,7 @@ from app.automation.evaluate import evaluate_trigger, load_ctx, rules_that_may_r
 from app.automation.schema import parse_trigger
 from app.db import SessionLocal
 
-logger = logging.getLogger("wealth-loop.automation")
+logger = logging.getLogger("cash-flow.automation")
 
 scheduler: BackgroundScheduler | None = None
 

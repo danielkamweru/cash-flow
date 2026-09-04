@@ -22,7 +22,7 @@ class ActionSpec(BaseModel):
     amount: float | None = None  # required when amount_rule == "fixed"
     target_goal_id: str | None = None  # overrides the rule TargetGoalId for send_money
     recipient_mobile_no: str | None = None  # required for a live money movement
-    purpose: str = "Wealth Loop automation"
+    purpose: str = "Cash-Flow automation"
 
 
 class TriggerSpec(BaseModel):

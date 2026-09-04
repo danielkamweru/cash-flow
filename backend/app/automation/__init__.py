@@ -1,4 +1,4 @@
-"""Wealth Loop automation engine.
+"""Cash-Flow automation engine.
 
 Deterministic trigger evaluation over an entity's books, an approval gate for
 money movement, and scheduled checks that run in the FastAPI process. Rules are
