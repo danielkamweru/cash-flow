@@ -27,7 +27,12 @@ export function friendlyError(err: unknown, fallback = "Something went wrong. Pl
     return "Network error. Please check your connection and try again.";
   if (lower.includes("timeout"))
     return "The request timed out. Please try again.";
-  if (lower.includes("gateway") || lower.includes("loop") || lower.includes("502") || lower.includes("503"))
+  
+  // Daraja-specific errors - show the actual error message for debugging
+  if (lower.includes("daraja"))
+    return raw;
+  
+  if (lower.includes("gateway") || lower.includes("502") || lower.includes("503"))
     return "The payment gateway is temporarily unavailable. Please try again shortly.";
 
   // Validation from backend

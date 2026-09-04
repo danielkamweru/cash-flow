@@ -29,7 +29,6 @@ export function mpesaLabel(description: string, category?: string): string | nul
   if (/\bpaybill\b/.test(d)) return "Paybill";
   if (/\btill\b|\bbuy\s*goods\b/.test(d)) return "Till Payment";
   if (/\bpesalink\b/.test(d)) return "PesaLink Transfer";
-  if (/\bloop\b/.test(d)) return "LOOP Transfer";
   if (/\bsalary\b|\bpayroll\b/.test(d)) return "Salary";
   if (/\brent\b/.test(d)) return "Rent";
   if (/\butility\b|\bkplc\b|\bnairobi\s*water\b/.test(d)) return "Utility";

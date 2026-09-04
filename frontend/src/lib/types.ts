@@ -92,9 +92,9 @@ export interface Transaction {
   category: string;
   type: "inflow" | "outflow" | "transfer" | "fee";
   provenance: DataProvenance;
-  /** Pending until LOOP confirms via callback or status inquiry. */
+  /** Pending until the payment gateway confirms via callback. */
   status?: TransactionStatus;
-  loopTxnReference?: string | null;
+  paymentReference?: string | null;
 }
 
 export type TransactionStatus = "pending" | "completed" | "failed";
@@ -451,9 +451,9 @@ export interface PersonalCoachHome {
   };
   investmentAdvice: InvestmentAdvice;
   automation?: PersonalAutomationState;
-  loopActions: Array<{
+  paymentActions: Array<{
     actionId: string;
-    loopProduct: string;
+    paymentMethod: string;
     title: string;
     plainReason: string;
     amount: number;
