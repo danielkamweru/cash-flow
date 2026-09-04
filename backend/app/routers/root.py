@@ -6,8 +6,8 @@ router = APIRouter()
 @router.get("/")
 def root():
     return {
-        "name": "Wealth Loop API",
-        "version": "0.1.0",
+        "name": "Cash-Flow API",
+        "version": "0.2.0",
         "docs": {
             "health": "GET /api/health",
             "user": "GET /api/user",

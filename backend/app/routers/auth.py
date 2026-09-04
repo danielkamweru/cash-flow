@@ -9,7 +9,6 @@ from sqlalchemy.orm import Session
 
 from app import models
 from app.auth import (
-    authorize_with_loop,
     create_access_token,
     get_current_user,
     hash_password,
@@ -48,13 +47,12 @@ def _normalize_email(email: str) -> str:
     return email.strip().lower()
 
 
-def _auth_response(user: models.User, entities: list[models.Entity], loop_auth: dict) -> dict:
+def _auth_response(user: models.User, entities: list[models.Entity]) -> dict:
     token = create_access_token(user.Id, user.Email)
     return {
         "token": token,
         "tokenType": "Bearer",
         "user": user_public(user, entities),
-        "loopAuthorization": loop_auth,
     }
 
 
@@ -68,17 +66,6 @@ def signup(body: SignUpRequest, db: Session = Depends(get_db)):
     if not body.pin.isdigit():
         return JSONResponse(status_code=400, content={"error": "Transaction PIN must be 4 digits"})
 
-    loop_auth = authorize_with_loop()
-
-    user = models.User(
-        Id=new_id(),
-        Name=body.name.strip(),
-        Email=email,
-        Phone=(body.phone or "").strip() or None,
-        Location="Kenya",
-        PasswordHash=hash_password(body.password),
-        PinHash=hash_pin(body.pin),
-    )
     db.add(user)
     db.flush()
 
@@ -90,7 +77,7 @@ def signup(body: SignUpRequest, db: Session = Depends(get_db)):
     entities = (
         db.query(models.Entity).filter(models.Entity.UserId == user.Id).order_by(models.Entity.Type).all()
     )
-    return _auth_response(user, entities, loop_auth)
+    return _auth_response(user, entities)
 
 
 @router.post("/signin")
@@ -100,13 +87,12 @@ def signin(body: SignInRequest, db: Session = Depends(get_db)):
     if user is None or not verify_password(body.password, user.PasswordHash):
         return JSONResponse(status_code=401, content={"error": "Invalid email or password"})
 
-    loop_auth = authorize_with_loop()
     entities = (
         db.query(models.Entity).filter(models.Entity.UserId == user.Id).order_by(models.Entity.Type).all()
     )
     user.UpdatedAt = datetime.now(timezone.utc)
     db.commit()
-    return _auth_response(user, entities, loop_auth)
+    return _auth_response(user, entities)
 
 
 @router.get("/me")
@@ -114,18 +100,9 @@ def me(user: models.User = Depends(get_current_user), db: Session = Depends(get_
     entities = (
         db.query(models.Entity).filter(models.Entity.UserId == user.Id).order_by(models.Entity.Type).all()
     )
-    loop_auth = authorize_with_loop()
     return {
         "user": user_public(user, entities),
-        "loopAuthorization": loop_auth,
     }
-
-
-@router.post("/loop-authorize")
-def loop_authorize(user: models.User = Depends(get_current_user)):
-    """Re-run LOOP Authorisation product for the signed-in session."""
-    _ = user
-    return {"success": True, "loopAuthorization": authorize_with_loop()}
 
 
 @router.post("/pin")

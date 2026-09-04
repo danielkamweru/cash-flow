@@ -3,7 +3,7 @@
 Until now the API could only read seeded rows, so Accounts, Assets, Investments,
 Liabilities, Goals, and Bills were fixed at whatever the seed wrote. These
 endpoints let a user keep their own books: anything they enter is marked
-``user_entered`` and anything the system posts from a real LOOP movement is
+``user_entered`` and anything the system posts from a real payment movement is
 ``actual`` — never ``demo``.
 
 Every route resolves through the signed-in user and 404s on an entity that

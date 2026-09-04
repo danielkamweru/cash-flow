@@ -6,9 +6,8 @@ those into real records: money leaves the funding account, the destination
 (investment, goal, or liability) is updated, and a transaction is written so the
 ledger explains where it went.
 
-Where the destination is reachable over LOOP, the money is moved for real
-through the gateway first and only recorded once it succeeds. Send-money
-channels that require a PIN still require it here.
+External money movement (M-Pesa STK Push) is handled separately via
+POST /api/mpesa/stk-push. These endpoints record the internal ledger side.
 """
 
 from __future__ import annotations
@@ -21,21 +20,13 @@ from pydantic import Field
 from sqlalchemy.orm import Session
 
 from app import models
-from app.auth import get_current_user, require_pin
+from app.auth import get_current_user
 from app.db import get_db
-from app.loop import (
-    PAY_TO_PAYBILL,
-    SEND_MONEY_MPESA,
-    SEND_MONEY_PESALINK,
-    get_gateway,
-)
-from app.loop.completion import is_success
 from app.mappers import goal_dto, investment_dto, liability_dto, transaction_dto
 from app.schemas import CamelModel
 
 router = APIRouter(prefix="/api/entities/{entity_id}/actions")
 
-# Instruments the advisor can allocate to, and how a holding of each behaves.
 INSTRUMENT_DEFAULTS = {
     "mmf":        {"liquidity": "daily",    "risk": "low",      "label": "Money Market Fund"},
     "sacco":      {"liquidity": "locked",   "risk": "moderate", "label": "SACCO deposits"},
@@ -43,13 +34,6 @@ INSTRUMENT_DEFAULTS = {
     "tbond":      {"liquidity": "tplus2",   "risk": "moderate", "label": "Treasury Bond"},
     "infra_bond": {"liquidity": "maturity", "risk": "moderate", "label": "Infrastructure Bond"},
     "nse":        {"liquidity": "tplus2",   "risk": "elevated", "label": "NSE equities"},
-}
-
-# LOOP channels a payout can leave through.
-CHANNELS = {
-    "mpesa":    (SEND_MONEY_MPESA, True),
-    "pesalink": (SEND_MONEY_PESALINK, True),
-    "paybill":  (PAY_TO_PAYBILL, False),
 }
 
 
@@ -65,74 +49,23 @@ def _own(db: Session, entity_id: str, user: models.User) -> models.Entity | None
 
 
 class InvestRequest(CamelModel):
-    """Move money from an account into an investment holding."""
-
     account_id: str
     amount: float = Field(gt=0)
     instrument: str = "mmf"
-    # Add to an existing holding, or name a new one.
     investment_id: str | None = None
     name: str | None = None
-    # Optional: actually move the money over LOOP to the provider.
-    channel: str | None = None          # mpesa | pesalink | paybill
-    destination: str | None = None      # phone number, or paybill number
-    account_number: str | None = None   # paybill account reference
-    pin: str | None = None
 
 
 class GoalFundRequest(CamelModel):
     account_id: str
     goal_id: str
     amount: float = Field(gt=0)
-    channel: str | None = None
-    destination: str | None = None
-    pin: str | None = None
 
 
 class DebtPaymentRequest(CamelModel):
     account_id: str
     liability_id: str
     amount: float = Field(gt=0)
-    channel: str | None = None
-    destination: str | None = None
-    account_number: str | None = None
-    pin: str | None = None
-
-
-def _move_over_loop(
-    *,
-    user: models.User,
-    channel: str,
-    destination: str,
-    amount: float,
-    reference: str,
-    account_number: str | None,
-    pin: str | None,
-) -> tuple[bool, dict]:
-    """Push the money through LOOP. Returns (succeeded, gateway result)."""
-    product_entry = CHANNELS.get(channel)
-    if product_entry is None:
-        return False, {"message": f"Unsupported channel '{channel}'"}
-    product, needs_pin = product_entry
-
-    if needs_pin:
-        require_pin(user, pin)
-
-    if channel == "paybill":
-        params = {
-            "merchantRcvTill": destination,
-            "accountNumber": account_number or destination,
-            "amount": f"{amount:.2f}",
-        }
-    else:
-        params = {
-            "recipientMobileNo": destination,
-            "amount": f"{amount:.2f}",
-            "purposeOfPayment": reference,
-        }
-
-    result = get_gateway().send(product, params)
-    return is_success(result), result
 
 
 def _debit(account: models.Account, amount: float) -> None:
@@ -147,7 +80,6 @@ def invest(
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Act on an allocation recommendation: fund an investment holding."""
     if _own(db, entity_id, user) is None:
         return JSONResponse(status_code=404, content={"error": "Entity not found"})
 
@@ -170,27 +102,6 @@ def invest(
         if holding is None or holding.EntityId != entity_id:
             return JSONResponse(status_code=404, content={"error": "Investment not found"})
 
-    txn_reference = None
-    gateway_result = None
-    if body.channel and body.destination:
-        moved, gateway_result = _move_over_loop(
-            user=user,
-            channel=body.channel,
-            destination=body.destination,
-            amount=body.amount,
-            reference=f"Invest — {spec['label']}",
-            account_number=body.account_number,
-            pin=body.pin,
-        )
-        if not moved:
-            return JSONResponse(
-                status_code=502,
-                content={"error": "LOOP did not accept the transfer",
-                         "loop": {"statusCode": gateway_result.get("statusCode"),
-                                  "message": gateway_result.get("message")}},
-            )
-        txn_reference = gateway_result.get("txnReference")
-
     if holding is None:
         holding = models.Investment(
             EntityId=entity_id,
@@ -200,7 +111,7 @@ def invest(
             CostBasis=0.0,
             Liquidity=spec["liquidity"],
             Risk=spec["risk"],
-            Provenance="actual" if txn_reference else "user_entered",
+            Provenance="user_entered",
             LastUpdated=_now(),
         )
         db.add(holding)
@@ -219,12 +130,10 @@ def invest(
         Amount=body.amount,
         Category="Invest / Save",
         Type="outflow",
-        Provenance="actual" if txn_reference else "user_entered",
-        LoopTxnReference=txn_reference,
+        Provenance="user_entered",
         Status="completed",
     )
     db.add(tx)
-
     db.add(models.ActivityEvent(
         EntityId=entity_id, Timestamp=_now(),
         Title="Invested from a recommendation",
@@ -240,7 +149,6 @@ def invest(
         "investment": investment_dto(holding),
         "transaction": transaction_dto(tx),
         "accountBalance": account.Balance,
-        "loop": {"txnReference": txn_reference} if txn_reference else None,
     }
 
 
@@ -251,7 +159,6 @@ def fund_goal(
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Act on a goal recommendation: move money into a goal pot."""
     if _own(db, entity_id, user) is None:
         return JSONResponse(status_code=404, content={"error": "Entity not found"})
 
@@ -267,19 +174,6 @@ def fund_goal(
             content={"error": f"Not enough in {account.Name} — balance is {account.Balance:,.2f}"},
         )
 
-    txn_reference = None
-    if body.channel and body.destination:
-        moved, result = _move_over_loop(
-            user=user, channel=body.channel, destination=body.destination,
-            amount=body.amount, reference=f"Goal — {goal.Name}",
-            account_number=None, pin=body.pin,
-        )
-        if not moved:
-            return JSONResponse(status_code=502, content={
-                "error": "LOOP did not accept the transfer",
-                "loop": {"statusCode": result.get("statusCode"), "message": result.get("message")}})
-        txn_reference = result.get("txnReference")
-
     goal.Current += body.amount
     _debit(account, body.amount)
 
@@ -287,8 +181,7 @@ def fund_goal(
         EntityId=entity_id, AccountId=account.Id, Date=_now(),
         Description=f"Goal contribution — {goal.Name}",
         Amount=body.amount, Category="Invest / Save", Type="outflow",
-        Provenance="actual" if txn_reference else "user_entered",
-        LoopTxnReference=txn_reference, Status="completed",
+        Provenance="user_entered", Status="completed",
     )
     db.add(tx)
     db.add(models.ActivityEvent(
@@ -304,7 +197,6 @@ def fund_goal(
         "goal": goal_dto(goal),
         "transaction": transaction_dto(tx),
         "accountBalance": account.Balance,
-        "loop": {"txnReference": txn_reference} if txn_reference else None,
     }
 
 
@@ -315,7 +207,6 @@ def pay_debt(
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Act on a debt recommendation: pay down a liability."""
     if _own(db, entity_id, user) is None:
         return JSONResponse(status_code=404, content={"error": "Entity not found"})
 
@@ -331,19 +222,6 @@ def pay_debt(
             content={"error": f"Not enough in {account.Name} — balance is {account.Balance:,.2f}"},
         )
 
-    txn_reference = None
-    if body.channel and body.destination:
-        moved, result = _move_over_loop(
-            user=user, channel=body.channel, destination=body.destination,
-            amount=body.amount, reference=f"Repay — {liability.Name}",
-            account_number=body.account_number, pin=body.pin,
-        )
-        if not moved:
-            return JSONResponse(status_code=502, content={
-                "error": "LOOP did not accept the payment",
-                "loop": {"statusCode": result.get("statusCode"), "message": result.get("message")}})
-        txn_reference = result.get("txnReference")
-
     liability.Balance = max(0.0, liability.Balance - body.amount)
     liability.LastUpdated = _now()
     _debit(account, body.amount)
@@ -352,8 +230,7 @@ def pay_debt(
         EntityId=entity_id, AccountId=account.Id, Date=_now(),
         Description=f"Repayment — {liability.Name}",
         Amount=body.amount, Category="Debt repayment", Type="outflow",
-        Provenance="actual" if txn_reference else "user_entered",
-        LoopTxnReference=txn_reference, Status="completed",
+        Provenance="user_entered", Status="completed",
     )
     db.add(tx)
     db.add(models.ActivityEvent(
@@ -369,5 +246,4 @@ def pay_debt(
         "liability": liability_dto(liability),
         "transaction": transaction_dto(tx),
         "accountBalance": account.Balance,
-        "loop": {"txnReference": txn_reference} if txn_reference else None,
     }

@@ -110,7 +110,7 @@ def owned_entity(db: Session, entity_id: str, user: models.User) -> models.Entit
 def health():
     return {
         "ok": True,
-        "service": "wealth-loop-backend",
+        "service": "cash-flow-api",
         "mode": "demo",
         "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
     }

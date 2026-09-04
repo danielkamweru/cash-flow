@@ -1,13 +1,14 @@
 """Business working capital: suppliers you owe, and invoices owed to you.
 
-Both sides route through LOOP. Paying a supplier uses Pay to Paybill or Pay to
-M-Pesa Till depending on what they accept; collecting an invoice pushes an STK
-or LOOP prompt to the customer, and the pending transaction that creates settles
-itself from the callback — which is what reconciles the invoice.
+Both sides are settled through Cash-Flow's ledger. Paying a supplier records a
+direct outflow; collecting an invoice pushes an M-Pesa STK prompt to the
+customer via Safaricom Daraja, and the pending transaction settles from the
+callback.
 """
 
 from __future__ import annotations
 
+import uuid
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends
@@ -17,16 +18,9 @@ from sqlalchemy.orm import Session
 
 from app import models
 from app.auth import get_current_user
-from app.config import loop_callback_url
+from app.daraja import get_stk_service, normalize_phone
+from app.daraja.completion import track_pending_stk
 from app.db import get_db
-from app.loop import (
-    LOOP_PROMPT,
-    MPESA_PROMPT,
-    PAY_TO_MPESA_TILL,
-    PAY_TO_PAYBILL,
-    get_gateway,
-)
-from app.loop.completion import is_success, record_completed_payment, track_pending_topup
 from app.mappers import bnpl_dto, supplier_dto, transaction_dto
 from app.schemas import CamelModel
 
@@ -63,7 +57,7 @@ def invoice_dto(i: models.Invoice) -> dict:
         "daysOverdue": days_overdue,
         "notes": i.Notes,
         "lineItems": i.LineItems or [],
-        "loopTxnReference": i.LoopTxnReference,
+        "paymentReference": i.PaymentReference,
     }
 
 
@@ -180,7 +174,7 @@ def pay_supplier(
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Settle a supplier over LOOP, and draw down a BNPL agreement if given."""
+    """Settle a supplier and draw down a BNPL agreement if given."""
     if _own(db, entity_id, user) is None:
         return JSONResponse(status_code=404, content={"error": "Entity not found"})
 
@@ -199,26 +193,21 @@ def pay_supplier(
         return JSONResponse(status_code=400, content={
             "error": f"{supplier.Name} has no paybill or till number saved"})
 
-    product = PAY_TO_PAYBILL if body.channel == "paybill" else PAY_TO_MPESA_TILL
-    result = get_gateway().send(product, {
-        "merchantRcvTill": till,
-        "accountNumber": body.account_number or till,
-        "amount": f"{body.amount:.2f}",
-    })
-    if not is_success(result):
-        return JSONResponse(status_code=502, content={
-            "error": "LOOP did not accept the payment",
-            "loop": {"statusCode": result.get("statusCode"), "message": result.get("message")}})
-
-    tx = record_completed_payment(
-        db,
-        entity_id=entity_id,
-        account_id=account.Id,
-        amount=body.amount,
-        txn_reference=result["txnReference"],
-        description=f"Supplier payment — {supplier.Name}",
-        category="Suppliers",
+    tx = models.Transaction(
+        EntityId=entity_id,
+        AccountId=account.Id,
+        Date=_now(),
+        Description=f"Supplier payment — {supplier.Name}",
+        Amount=body.amount,
+        Category="Suppliers",
+        Type="outflow",
+        Provenance="actual",
+        PaymentReference=f"SUP-{uuid.uuid4().hex[:12]}",
+        Status="completed",
     )
+    db.add(tx)
+    account.Balance -= body.amount
+    account.LastUpdated = _now()
 
     if body.bnpl_agreement_id:
         agreement = db.get(models.BnplAgreement, body.bnpl_agreement_id)
@@ -243,7 +232,6 @@ def pay_supplier(
         "supplier": supplier_dto(supplier, []),
         "transaction": transaction_dto(tx),
         "accountBalance": account.Balance,
-        "loop": {"txnReference": result.get("txnReference")},
     }
 
 
@@ -275,7 +263,7 @@ class InvoiceCollect(CamelModel):
     """Push a payment prompt to the customer for what is still outstanding."""
 
     account_id: str
-    channel: str = "mpesa"        # mpesa (STK) | loop (request-to-pay)
+    channel: str = "mpesa"        # mpesa (STK)
     amount: float | None = None   # defaults to the outstanding balance
     phone: str | None = None      # defaults to the invoice's customer phone
 
@@ -415,10 +403,10 @@ def collect_invoice(
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Push an STK or LOOP prompt at the customer to collect what they owe.
+    """Push an M-Pesa STK prompt at the customer to collect what they owe.
 
-    The pending transaction this creates settles from the LOOP callback, and
-    that settlement is what marks the invoice paid.
+    The pending transaction this creates settles from the Daraja callback, and
+    that settlement is what reconciles the invoice.
     """
     if _own(db, entity_id, user) is None:
         return JSONResponse(status_code=404, content={"error": "Entity not found"})
@@ -440,37 +428,35 @@ def collect_invoice(
     if amount <= 0:
         return JSONResponse(status_code=400, content={"error": "Nothing outstanding on this invoice"})
 
-    if body.channel == "loop":
-        result = get_gateway().send(LOOP_PROMPT, {
-            "mobileNo": phone,
-            "amount": f"{amount:.2f}",
-            "reason": f"Invoice {invoice.Number}",
-            "callBackUrl": loop_callback_url("loop-prompt"),
-        })
-    else:
-        result = get_gateway().send(MPESA_PROMPT, {
-            "payMblNo": phone,
-            "amount": f"{amount:.2f}",
-            "extRefNo": invoice.Number,
-            "callBackUrl": loop_callback_url("mpesa-prompt"),
-        })
+    try:
+        phone_normalized = normalize_phone(phone)
+    except ValueError:
+        return JSONResponse(status_code=400, content={"error": f"Invalid phone number: {phone}"})
 
-    if not is_success(result):
-        return JSONResponse(status_code=502, content={
-            "error": "LOOP did not accept the payment request",
-            "loop": {"statusCode": result.get("statusCode"), "message": result.get("message")}})
+    try:
+        result = get_stk_service().initiate(
+            phone_number=phone_normalized,
+            amount=int(amount),
+            account_reference=invoice.Number[:12],
+            transaction_desc=f"Invoice {invoice.Number}",
+        )
+    except RuntimeError as exc:
+        return JSONResponse(status_code=502, content={"error": str(exc)})
 
-    txn_reference = result["txnReference"]
-    tx = track_pending_topup(
+    checkout_request_id = result.get("CheckoutRequestID")
+    if not checkout_request_id:
+        return JSONResponse(status_code=502, content={"error": "Daraja did not return a CheckoutRequestID"})
+
+    tx = track_pending_stk(
         db,
         entity_id=entity_id,
         account_id=account.Id,
         amount=amount,
-        txn_reference=txn_reference,
+        checkout_request_id=checkout_request_id,
         description=f"Invoice {invoice.Number} — {invoice.CustomerName}",
     )
     tx.Category = "Receivables"
-    invoice.LoopTxnReference = txn_reference
+    invoice.PaymentReference = checkout_request_id
     if invoice.Status == "draft":
         invoice.Status = "sent"
     db.commit()
@@ -481,7 +467,10 @@ def collect_invoice(
         "ok": True,
         "invoice": invoice_dto(invoice),
         "transaction": transaction_dto(tx),
-        "loop": {"txnReference": txn_reference, "message": result.get("message")},
+        "payment": {
+            "checkoutRequestId": checkout_request_id,
+            "message": result.get("ResponseDescription") or result.get("CustomerMessage"),
+        },
     }
 
 
