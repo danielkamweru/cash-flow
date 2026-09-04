@@ -36,7 +36,7 @@ Open [http://localhost:3000](http://localhost:3000) and sign in with demo creden
 - **Goals & savings** — Track progress toward financial goals
 - **Advisor** — Explainable recommendations based on your financial position
 - **Automation** — User-approved rules for recurring financial actions
-- **Payments** — LOOP gateway integration for M-Pesa, PesaLink, and paybill
+- **Payments** — Safaricom Daraja M-Pesa STK Push integration
 - **Business context** — Suppliers, receivables, and invoice management
 - **Chama / Community** — Pooled savings group tracking
 
@@ -47,16 +47,16 @@ Open [http://localhost:3000](http://localhost:3000) and sign in with demo creden
 | Backend | Python 3.11+, FastAPI, SQLAlchemy 2, psycopg 3 |
 | Frontend | Next.js 16, React 19, Tailwind CSS 4 |
 | Database | PostgreSQL |
-| Payments | LOOP gateway (sandbox or live) |
+| Payments | Safaricom Daraja M-Pesa (sandbox or live) |
 
 ## Prerequisites
 
 - Python 3.11+ (via pyenv recommended)
 - Node.js 20+
-- PostgreSQL running locally with a `wealthloop` database
+- PostgreSQL running locally with a `cashflow` database
 
 ```bash
-sudo -u postgres psql -c "CREATE DATABASE wealthloop;"
+sudo -u postgres psql -c "CREATE DATABASE cashflow;"
 sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'postgres';"
 ```
 
@@ -104,13 +104,17 @@ Run from `frontend/`:
 | Variable | Default | Purpose |
 |----------|---------|---------|
 | `PORT` | 8000 | Server port |
-| `DATABASE_URL` | `postgresql+psycopg://postgres:postgres@localhost:5432/wealthloop` | PostgreSQL connection |
+| `DATABASE_URL` | `postgresql+psycopg://postgres:postgres@localhost:5432/cashflow` | PostgreSQL connection |
 | `CORS_ORIGIN` | `http://localhost:3000` | Comma-separated allowed origins |
 | `JWT_SECRET` | dev secret | JWT signing secret |
 | `JWT_EXPIRE_HOURS` | 72 | Token lifetime |
-| `LOOP_BASE_URL` | `https://sandbox.loop.co.ke` | LOOP API base |
-| `LOOP_CONSUMER_KEY` | | LOOP OAuth2 client ID |
-| `LOOP_CONSUMER_SECRET` | | LOOP OAuth2 client secret |
+| `DARAJA_CONSUMER_KEY` | | Daraja OAuth2 client ID |
+| `DARAJA_CONSUMER_SECRET` | | Daraja OAuth2 client secret |
+| `DARAJA_SHORTCODE` | | Daraja business shortcode |
+| `DARAJA_PASSKEY` | | Daraja passkey |
+| `DARAJA_AUTH_URL` | `https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials` | Daraja auth endpoint |
+| `DARAJA_STK_PUSH_URL` | `https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest` | Daraja STK Push endpoint |
+| `DARAJA_CALLBACK_URL` | | Public HTTPS callback for M-Pesa results |
 
 ### Frontend (`frontend/.env.local`)
 
@@ -118,9 +122,11 @@ Run from `frontend/`:
 |----------|---------|
 | `NEXT_PUBLIC_API_URL` | Backend API URL (default `http://localhost:8000/api`) |
 
-## LOOP Payments
+## Safaricom Daraja Payments
 
-Set `LOOP_CONSUMER_KEY` and `LOOP_CONSUMER_SECRET` in `backend/.env` for live gateway calls. Without them, simulate endpoints return mocked responses.
+Set `DARAJA_CONSUMER_KEY`, `DARAJA_CONSUMER_SECRET`, `DARAJA_SHORTCODE`, and `DARAJA_PASSKEY` in `backend/.env` for live sandbox calls. Without them, the payments page shows a configuration prompt.
+
+Get sandbox credentials at [developer.safaricom.co.ke](https://developer.safaricom.co.ke).
 
 ## Project Structure
 
@@ -129,7 +135,7 @@ cash-flow/
   backend/          # FastAPI application
     app/
       routers/      # API route modules
-      loop/         # LOOP payment gateway client
+      daraja/       # Safaricom Daraja M-Pesa client
       automation/   # Rule engine
       business/     # Business coach logic
       advisors/     # Advisory agents

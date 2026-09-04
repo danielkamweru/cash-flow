@@ -6,7 +6,7 @@
     "dev:frontend": "npm run dev --prefix frontend",
     "dev:backend": "npm run start --prefix backend",
     "backend:seed": "npm run seed --prefix backend",
-    "db:schema": "psql -h localhost -U postgres -d wealthloop -f database/schema.sql",
-    "db:seed-sql": "psql -h localhost -U postgres -d wealthloop -f database/seed.sql"
+    "db:schema": "psql -h localhost -U postgres -d cashflow -f database/schema.sql",
+    "db:seed-sql": "psql -h localhost -U postgres -d cashflow -f database/seed.sql"
   }
 }
