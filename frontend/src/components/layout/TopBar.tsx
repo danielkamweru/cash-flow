@@ -13,7 +13,7 @@ import { ThemeToggle } from "@/components/layout/ThemeToggle";
 
 export function TopBar({ onMenu }: { onMenu?: () => void }) {
   const { entityType, setEntityType, data, consolidatedNetWorth, source } = useEntity();
-  const { user, loopAuthorization, signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const { hidden, toggleHidden } = usePrivacy();
   const router = useRouter();
   const [confirmSignOut, setConfirmSignOut] = useState(false);
@@ -67,18 +67,8 @@ export function TopBar({ onMenu }: { onMenu?: () => void }) {
           <div className="h-8 w-px shrink-0 bg-cf-border" />
           <div className="flex min-w-0 items-center gap-2">
             <span className="relative flex h-2.5 w-2.5 shrink-0">
-              <span
-                className={cn(
-                  "absolute inline-flex h-full w-full animate-pulse-soft rounded-full opacity-60",
-                  loopAuthorization?.authorized ? "bg-cf-success" : "bg-cf-warning",
-                )}
-              />
-              <span
-                className={cn(
-                  "relative inline-flex h-2.5 w-2.5 rounded-full",
-                  loopAuthorization?.authorized ? "bg-cf-success" : "bg-cf-warning",
-                )}
-              />
+              <span className="absolute inline-flex h-full w-full animate-pulse-soft rounded-full opacity-60 bg-cf-success" />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-cf-success" />
             </span>
             <div className="min-w-0">
               <p className="text-xs font-medium text-cf-text">{data?.health.tier ?? "…"}</p>
@@ -86,8 +76,6 @@ export function TopBar({ onMenu }: { onMenu?: () => void }) {
                 {data ? `Wealth Health · ${formatRelative(data.asOf)}` : "Connecting to API…"}
                 {" · "}
                 {source.toUpperCase()}
-                {" · LOOP "}
-                {loopAuthorization?.authorized ? "authorized" : "pending"}
               </p>
             </div>
           </div>
@@ -146,8 +134,8 @@ export function TopBar({ onMenu }: { onMenu?: () => void }) {
           {" · "}
           {data ? formatKes(consolidatedNetWorth) : "—"}
         </p>
-        <p className="shrink-0 text-[10px] text-cf-muted">
-          LOOP {loopAuthorization?.authorized ? "ok" : "pending"}
+        <p className="shrink-0 text-[10px] text-cf-success">
+          Safaricom Daraja
         </p>
       </div>
 

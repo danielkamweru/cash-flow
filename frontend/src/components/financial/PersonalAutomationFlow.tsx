@@ -28,7 +28,7 @@ export function PersonalAutomationFlow({
   const advice = coach.investmentAdvice;
   const allocations = advice.allocations ?? [];
 
-  // Progress through the loop for visual status
+  // Progress through the cash-flow loop for visual status
   const stepState = (id: string): "done" | "active" | "pending" | "skipped" => {
     if (id === "income" || id === "bills") return "done";
     if (id === "emergency") return coach.emergency.intact ? "done" : "active";

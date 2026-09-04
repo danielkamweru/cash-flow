@@ -87,7 +87,6 @@ export function Sidebar({
 }) {
   const pathname = usePathname();
   const { entityType } = useEntity();
-  const { loopAuthorization } = useAuth();
   const isPersonal = entityType === "PERSONAL";
   const NAV = isPersonal ? PERSONAL_NAV : BUSINESS_NAV;
   const groups = [...new Set(NAV.map((n) => n.group))];
@@ -162,8 +161,7 @@ export function Sidebar({
         <div className="mt-3 flex items-center gap-2 text-[11px] text-cf-muted">
           <CircleDollarSign className="h-3.5 w-3.5 text-cf-success" />
           {isPersonal ? "Personal workspace · pay anyone" : "Merchant workspace · receive & collect"}
-          {" · LOOP "}
-          {loopAuthorization?.authorized ? "connected" : "sandbox"}
+          {" · M-Pesa via Safaricom Daraja"}
         </div>
       </div>
     </aside>

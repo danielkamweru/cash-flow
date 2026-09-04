@@ -1,10 +1,9 @@
 "use client";
 
-import { executeLoopAction } from "@/lib/api/coach";
 import type { PersonalCoachHome } from "@/lib/types";
 import { formatKes, cn } from "@/lib/format";
 import Link from "next/link";
-import { useState } from "react";
+import { Smartphone } from "lucide-react";
 
 const LIGHT: Record<
   PersonalCoachHome["trafficLight"],
@@ -35,21 +34,6 @@ export function TrafficLightHome({
   onRefresh?: (next: PersonalCoachHome) => void;
 }) {
   const theme = LIGHT[coach.trafficLight];
-  const [busy, setBusy] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  async function runAction(actionId: string) {
-    setBusy(actionId);
-    setError(null);
-    try {
-      const res = await executeLoopAction(actionId);
-      onRefresh?.(res.data);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not complete action");
-    } finally {
-      setBusy(null);
-    }
-  }
 
   return (
     <section className="space-y-4 animate-fade-up">
@@ -161,30 +145,34 @@ export function TrafficLightHome({
         </div>
 
         <div className="cf-card p-5">
-          <h3 className="font-display text-lg font-semibold">What to do with LOOP</h3>
-          <p className="mt-1 text-xs text-cf-muted">
-            Actions use your mapped LOOP APIs (Paybill / Send Money) — only after you confirm.
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <h3 className="font-display text-lg font-semibold">Upcoming payments</h3>
+            <span className="inline-flex items-center gap-1 rounded-full bg-cf-primary/10 px-2.5 py-1 text-[10px] font-semibold text-cf-primary">
+              <Smartphone className="h-3 w-3" />
+              M-Pesa
+            </span>
+          </div>
+          <p className="mb-3 text-xs text-cf-muted">
+            Bills due soon. Go to Payments to send an M-Pesa STK Push.
           </p>
-          {error && <p className="mt-3 text-sm text-cf-danger">{error}</p>}
-          <ul className="mt-4 space-y-3">
-            {coach.loopActions.map((a) => (
+          <ul className="space-y-3">
+            {coach.paymentActions.map((a) => (
               <li key={a.actionId} className="rounded-xl border border-cf-border p-3">
                 <p className="text-sm font-semibold text-cf-text">{a.title}</p>
                 <p className="mt-1 text-xs text-cf-muted">{a.plainReason}</p>
                 <p className="mt-1 text-[11px] text-cf-muted">
-                  {a.loopProduct} · {formatKes(a.amount)}
+                  M-Pesa · {formatKes(a.amount)}
                 </p>
                 {a.blockedReason ? (
                   <p className="mt-2 text-xs text-cf-warning">{a.blockedReason}</p>
-                ) : a.loopProduct !== "none" ? (
-                  <button
-                    type="button"
-                    disabled={busy === a.actionId}
-                    onClick={() => void runAction(a.actionId)}
-                    className="mt-3 rounded-full bg-gradient-to-r from-cf-primary to-cf-primary-deep px-4 py-2 text-xs font-semibold text-white disabled:opacity-60"
+                ) : a.paymentMethod !== "none" ? (
+                  <Link
+                    href="/payments"
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-cf-primary px-4 py-2 text-xs font-semibold text-white hover:bg-cf-primary-hover"
                   >
-                    {busy === a.actionId ? "Working…" : "Confirm & pay with LOOP"}
-                  </button>
+                    <Smartphone className="h-3 w-3" />
+                    Pay with M-Pesa
+                  </Link>
                 ) : (
                   <Link
                     href="/intelligence"
@@ -195,8 +183,8 @@ export function TrafficLightHome({
                 )}
               </li>
             ))}
-            {!coach.loopActions.length && (
-              <li className="text-sm text-cf-muted">No LOOP actions needed right now.</li>
+            {!coach.paymentActions.length && (
+              <li className="text-sm text-cf-muted">No payments due right now.</li>
             )}
           </ul>
         </div>
