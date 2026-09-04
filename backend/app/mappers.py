@@ -59,7 +59,7 @@ def transaction_dto(t: models.Transaction) -> dict[str, Any]:
         "type": t.Type,
         "provenance": t.Provenance,
         "status": t.Status,
-        "loopTxnReference": t.LoopTxnReference,
+        "paymentReference": t.PaymentReference,
     }
 
 

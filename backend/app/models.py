@@ -84,7 +84,7 @@ class Transaction(Base):
     Provenance: Mapped[str] = mapped_column(String, nullable=False)
     CreatedAt: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     Metadata: Mapped[Any | None] = mapped_column(JSONB, nullable=True)
-    LoopTxnReference: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)
+    PaymentReference: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)
     Status: Mapped[str] = mapped_column(String, nullable=False, default="completed")
 
 
@@ -384,6 +384,6 @@ class Invoice(Base):
     Status: Mapped[str] = mapped_column(String, nullable=False, default="draft")
     Notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     LineItems: Mapped[Any | None] = mapped_column(JSONB, nullable=True)
-    # Set when a payment prompt has been pushed to the customer.
-    LoopTxnReference: Mapped[str | None] = mapped_column(String, nullable=True)
+    # Stores the Daraja CheckoutRequestID when a payment prompt has been pushed to the customer.
+    PaymentReference: Mapped[str | None] = mapped_column(String, nullable=True)
     CreatedAt: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
