@@ -82,16 +82,15 @@ export default function SignUpPage() {
             <div className="min-w-0">
               <h1 className="font-display text-xl font-semibold tracking-tight sm:text-2xl">Create account</h1>
               <p className="mt-1 text-sm text-cf-muted">
-                Register for Cash-Flow. On signup we call LOOP{" "}
-                <strong className="font-medium text-cf-text">Authorisation</strong> for your app
-                credentials from{" "}
+                Register for Cash-Flow. On signup you can start using Safaricom Daraja{" "}
+                <strong className="font-medium text-cf-text">M-Pesa STK Push</strong> from
                 <a
-                  href="https://sandbox.loop.co.ke/devportal/my-apps"
+                  href="https://developer.safaricom.co.ke"
                   target="_blank"
                   rel="noreferrer"
                   className="text-cf-primary underline-offset-2 hover:underline"
                 >
-                  sandbox My Apps
+                  {" "}Daraja Portal
                 </a>
                 .
               </p>

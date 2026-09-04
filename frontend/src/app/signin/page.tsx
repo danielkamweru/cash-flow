@@ -70,14 +70,14 @@ export default function SignInPage() {
             <div className="min-w-0">
               <h1 className="font-display text-xl font-semibold tracking-tight sm:text-2xl">Welcome back</h1>
               <p className="mt-1 text-sm text-cf-muted">
-                Sign in to Cash-Flow. Authorization uses LOOP sandbox Authorisation (
+                Sign in to Cash-Flow. Payments use Safaricom Daraja M-Pesa (
                 <a
-                  href="https://sandbox.loop.co.ke/devportal/my-apps"
+                  href="https://developer.safaricom.co.ke"
                   target="_blank"
                   rel="noreferrer"
                   className="text-cf-primary underline-offset-2 hover:underline"
                 >
-                  My Apps
+                  Daraja Portal
                 </a>
                 ).
               </p>

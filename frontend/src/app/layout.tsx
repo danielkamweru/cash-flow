@@ -60,7 +60,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body className="min-h-full bg-cf-bg font-sans text-cf-text transition-colors duration-200">
+      <body
+        className="min-h-full bg-cf-bg font-sans text-cf-text transition-colors duration-200"
+        suppressHydrationWarning
+      >
         <ThemeProvider>
           <AuthProvider>
             <PrivacyProvider>

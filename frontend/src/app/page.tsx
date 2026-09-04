@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 
-const loopSteps = [
+const cashFlowSteps = [
   "Understand",
   "Analyze",
   "Find surplus",
@@ -118,12 +118,12 @@ export default function LandingPage() {
 
         <section className="border-y border-cf-border bg-cf-elevated/50 py-8 sm:py-10">
           <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-2 px-4 sm:px-5 md:gap-3">
-            {loopSteps.map((step, i) => (
+            {cashFlowSteps.map((step, i) => (
               <div key={step} className="flex items-center gap-2 md:gap-3">
                 <span className="rounded-full border border-cf-border bg-cf-surface px-2.5 py-1.5 text-[11px] font-medium text-cf-text sm:px-3 sm:text-xs">
                   {step}
                 </span>
-                {i < loopSteps.length - 1 && (
+                {i < cashFlowSteps.length - 1 && (
                   <span className="hidden text-cf-muted sm:inline">→</span>
                 )}
               </div>
