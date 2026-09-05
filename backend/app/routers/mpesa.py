@@ -4,6 +4,10 @@ POST /api/mpesa/stk-push   — initiate STK Push
 POST /api/mpesa/callback   — Safaricom async callback
 GET  /api/mpesa/status     — sandbox configuration status
 GET  /api/mpesa/payments/{checkout_request_id} — payment lookup
+POST /api/mpesa/b2b        — Business Pay Bill payment
+GET  /api/mpesa/b2b/payments/{originator_conversation_id} — B2B payment lookup
+POST /api/mpesa/b2b/result  — B2B ResultURL callback
+POST /api/mpesa/b2b/queue-timeout — B2B QueueTimeOut callback
 """
 
 from __future__ import annotations
@@ -50,22 +54,6 @@ class STKPushResponse(BaseModel):
     message: str
     checkout_request_id: str | None = None
     merchant_request_id: str | None = None
-
-
-class QRGenerateRequest(BaseModel):
-    amount: float = Field(..., gt=0, description="Amount in KES")
-    reference: str = Field(..., max_length=20, description="Payment/invoice reference")
-    merchant_name: str | None = Field(default=None, max_length=12, description="Merchant name for QR")
-    trx_code: str = Field(default="BG", pattern="^(BG|PA|SM|SB)$", description="BG=Buy Goods, PA=Pay Bill, SM=Send Money, SB=Special")
-    entity_id: str | None = None
-    account_id: str | None = None
-
-
-class QRGenerateResponse(BaseModel):
-    success: bool
-    message: str
-    qr_code: str | None = None
-    request_id: str | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -224,7 +212,6 @@ async def mpesa_callback(request: Request, db: Session = Depends(get_db)):
     except Exception:  # noqa: BLE001
         # Never let a processing error cause a non-200 — Safaricom would retry
         pass
-
     # Safaricom expects this exact acknowledgement shape
     return {"ResultCode": 0, "ResultDesc": "Accepted"}
 
@@ -253,82 +240,6 @@ def get_payment(
             "date": tx.Date.isoformat().replace("+00:00", "Z"),
         },
     }
-
-
-@router.post("/qr", response_model=QRGenerateResponse)
-def generate_qr(
-    body: QRGenerateRequest,
-    user: models.User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    """Generate a Safaricom Dynamic QR code via Daraja.
-
-    1. Validates the request payload.
-    2. Obtains a Daraja access token (cached).
-    3. Sends the Dynamic QR request to Safaricom.
-    4. Records a pending transaction in the ledger (if entity_id + account_id provided).
-    5. Returns the base64 QR code for the frontend to display.
-    """
-    s = get_settings()
-    if not s.daraja_configured:
-        return JSONResponse(
-            status_code=503,
-            content={
-                "success": False,
-                "message": (
-                    "M-Pesa is not configured. Set DARAJA_CONSUMER_KEY, "
-                    "DARAJA_CONSUMER_SECRET, DARAJA_SHORTCODE, and DARAJA_PASSKEY "
-                    "in backend/.env."
-                ),
-            },
-        )
-
-    merchant_name = body.merchant_name or "Cash-Flow"
-
-    try:
-        result = get_stk_service().generate_qr_code(
-            amount=body.amount,
-            ref_no=body.reference,
-            merchant_name=merchant_name,
-            trx_code=body.trx_code,
-        )
-    except ValueError as exc:
-        return JSONResponse(status_code=422, content={"success": False, "message": str(exc)})
-    except RuntimeError as exc:
-        error_msg = str(exc)
-        return JSONResponse(
-            status_code=502,
-            content={
-                "success": False,
-                "message": f"Daraja QR error: {error_msg}",
-                "darajaError": error_msg,
-            },
-        )
-
-    qr_code = result.get("QRCode")
-    request_id = result.get("RequestID")
-
-    # Record pending transaction in the ledger
-    if body.entity_id and body.account_id and request_id:
-        try:
-            from app.daraja.completion import track_pending_qr
-            track_pending_qr(
-                db,
-                entity_id=body.entity_id,
-                account_id=body.account_id,
-                amount=float(body.amount),
-                request_id=request_id,
-                description=f"M-Pesa QR — {body.reference}",
-            )
-        except Exception:  # noqa: BLE001
-            pass  # Ledger failure must not block the payment response
-
-    return QRGenerateResponse(
-        success=True,
-        message="QR code generated successfully.",
-        qr_code=qr_code,
-        request_id=request_id,
-    )
 
 
 # ---------------------------------------------------------------------------
@@ -437,6 +348,96 @@ def b2b_payment(
     return B2BPaymentResponse(
         success=True,
         message="B2B payment submitted. Awaiting Daraja ResultURL confirmation.",
+        originator_conversation_id=originator,
+        conversation_id=conversation,
+        response_code=response_code,
+        response_description=response_description,
+        reference=originator or conversation,
+    )
+
+
+@router.post("/b2b/pay-goods", response_model=B2BPaymentResponse)
+def b2b_pay_goods(
+    body: B2BPaymentRequest,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Initiate a Business-to-Business (Buy Goods) payment via Daraja.
+
+    The transaction is only completed after Safaricom POSTs the ResultURL
+    callback with ResultCode == 0.
+    """
+    s = get_settings()
+    if not s.daraja_b2b_configured:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "success": False,
+                "message": (
+                    "B2B is not configured. Set DARAJA_B2B_INITIATOR, "
+                    "DARAJA_B2B_SECURITY_CREDENTIAL, DARAJA_B2B_PARTY_A, "
+                    "DARAJA_B2B_PARTY_B, DARAJA_B2B_RESULT_URL, and "
+                    "DARAJA_B2B_QUEUE_TIMEOUT_URL in backend/.env."
+                ),
+            },
+        )
+
+    phone = None
+    if body.requester:
+        try:
+            phone = normalize_phone(body.requester)
+        except ValueError:
+            phone = body.requester
+
+    try:
+        result = get_b2b_service().business_pay_goods_request(
+            amount=float(body.amount),
+            account_reference=body.account_reference,
+            party_b=body.party_b or s.daraja_b2b_party_b,
+            requester=phone,
+            remarks=body.remarks,
+        )
+    except ValueError as exc:
+        return JSONResponse(status_code=422, content={"success": False, "message": str(exc)})
+    except RuntimeError as exc:
+        error_msg = str(exc)
+        return JSONResponse(
+            status_code=502,
+            content={
+                "success": False,
+                "message": f"Daraja B2B Buy Goods error: {error_msg}",
+                "darajaError": error_msg,
+            },
+        )
+
+    originator = result.get("OriginatorConversationID")
+    conversation = result.get("ConversationID")
+    response_code = result.get("ResponseCode")
+    response_description = result.get("ResponseDescription")
+
+    # Record the SUBMITTED transaction in the ledger (if entity + account supplied).
+    if body.entity_id and body.account_id and (originator or conversation):
+        try:
+            track_pending_b2b(
+                db,
+                entity_id=body.entity_id,
+                account_id=body.account_id,
+                amount=float(body.amount),
+                originator_conversation_id=originator or "",
+                conversation_id=conversation or "",
+                party_a=s.daraja_b2b_party_a,
+                party_b=(body.party_b or s.daraja_b2b_party_b),
+                account_reference=body.account_reference[:13],
+                description=f"M-Pesa B2B Buy Goods — {body.account_reference}",
+                requester=body.requester,
+            )
+        except Exception:  # noqa: BLE001
+            # Ledger failure must not block the payment response.
+            pass
+
+    return B2BPaymentResponse(
+        success=True,
+        message="B2B Buy Goods payment submitted. Awaiting Daraja ResultURL confirmation.",
         originator_conversation_id=originator,
         conversation_id=conversation,
         response_code=response_code,
