@@ -6,13 +6,12 @@ import { useToast } from "@/components/ui/Toast";
 import {
   fetchMpesaStatus,
   fetchPayment,
-  generateMpesaQR,
   initiateStkPush,
   initiateB2BPayment,
+  initiateB2BPayGoods,
   fetchB2BPayment,
   type MpesaStatus,
   type PaymentRecord,
-  type QRGenerateResponse,
   type B2BPaymentRecord,
 } from "@/lib/api/mpesa";
 import { useEntity, useEntityData } from "@/lib/context/EntityContext";
@@ -37,14 +36,16 @@ type PayState =
   | { kind: "success"; receipt: PaymentRecord }
   | { kind: "failed"; message: string }
   | { kind: "cancelled" }
-  | { kind: "qr_loading" }
-  | { kind: "qr_success"; qrCode: string; requestId: string | null }
-  | { kind: "qr_failed"; message: string }
   | { kind: "b2b_submitted"; reference: string; receipt: B2BPaymentRecord }
   | { kind: "b2b_polling"; reference: string }
   | { kind: "b2b_success"; receipt: B2BPaymentRecord }
   | { kind: "b2b_failed"; message: string }
-  | { kind: "b2b_timeout"; reference: string };
+  | { kind: "b2b_timeout"; reference: string }
+  | { kind: "paygoods_submitted"; reference: string; receipt: B2BPaymentRecord }
+  | { kind: "paygoods_polling"; reference: string }
+  | { kind: "paygoods_success"; receipt: B2BPaymentRecord }
+  | { kind: "paygoods_failed"; message: string }
+  | { kind: "paygoods_timeout"; reference: string };
 
 function MpesaBadge() {
   return (
@@ -142,55 +143,6 @@ function StatusCard({ state, onReset }: { state: PayState; onReset: () => void }
     );
   }
 
-  if (state.kind === "qr_loading") {
-    return (
-      <div className="cf-card flex items-center gap-3 p-5">
-        <span className={cn("h-2 w-2 animate-pulse rounded-full", MPESA_GREEN_BG)} />
-        <p className="text-sm text-cf-muted">Generating M-Pesa QR code…</p>
-      </div>
-    );
-  }
-
-  if (state.kind === "qr_success") {
-    return (
-      <div className="cf-card space-y-4 border border-cf-success/40 bg-cf-success/10 p-5">
-        <div className="flex items-center gap-3">
-          <CheckCircle className="h-5 w-5 shrink-0 text-cf-success" />
-          <p className="font-display text-base font-semibold text-cf-success">QR code generated</p>
-        </div>
-        <div className="flex flex-col items-center gap-3">
-          <img
-            src={`data:image/png;base64,${state.qrCode}`}
-            alt="M-Pesa QR Code"
-            className="h-48 w-48 rounded-xl border border-cf-border bg-white p-2"
-          />
-          <p className="text-sm font-semibold text-cf-text">Scan with M-Pesa to pay</p>
-          {state.requestId && (
-            <p className="text-[11px] text-cf-muted">Request ID: {state.requestId}</p>
-          )}
-        </div>
-        <button type="button" onClick={onReset} className="text-xs text-cf-muted hover:text-cf-text underline">
-          Generate another QR
-        </button>
-      </div>
-    );
-  }
-
-  if (state.kind === "qr_failed") {
-    return (
-      <div className="cf-card space-y-2 border border-cf-danger/40 bg-cf-danger/10 p-5">
-        <div className="flex items-center gap-3">
-          <XCircle className="h-5 w-5 shrink-0 text-cf-danger" />
-          <p className="font-display text-base font-semibold text-cf-danger">QR generation failed</p>
-        </div>
-        <p className="text-sm text-cf-muted">{state.message}</p>
-        <button type="button" onClick={onReset} className="text-xs text-cf-muted hover:text-cf-text underline">
-          Try again
-        </button>
-      </div>
-    );
-  }
-
   if (state.kind === "b2b_submitted" || state.kind === "b2b_polling") {
     return (
       <div className={cn("cf-card space-y-3 border p-5", MPESA_GREEN_BORDER, MPESA_GREEN_LIGHT)}>
@@ -258,6 +210,84 @@ function StatusCard({ state, onReset }: { state: PayState; onReset: () => void }
         <div className="flex items-center gap-3">
           <Clock className="h-5 w-5 shrink-0 text-cf-warning" />
           <p className="font-display text-base font-semibold text-cf-warning">B2B queued — no response yet</p>
+        </div>
+        <p className="text-sm text-cf-muted">
+          Daraja has not returned a result within the queue window. Reference: {state.reference}
+        </p>
+        <button type="button" onClick={onReset} className="text-xs text-cf-muted hover:text-cf-text underline">
+          Start over
+        </button>
+      </div>
+    );
+  }
+
+  if (state.kind === "paygoods_submitted" || state.kind === "paygoods_polling") {
+    return (
+      <div className={cn("cf-card space-y-3 border p-5", MPESA_GREEN_BORDER, MPESA_GREEN_LIGHT)}>
+        <div className="flex items-center gap-3">
+          <Building2 className={cn("h-5 w-5 shrink-0", MPESA_GREEN)} />
+          <div>
+            <p className={cn("font-display text-base font-semibold", MPESA_GREEN)}>
+              Business Buy Goods submitted
+            </p>
+            <p className="text-sm text-cf-muted">
+              Daraja accepted the request. Awaiting the ResultURL callback for final status.
+            </p>
+          </div>
+        </div>
+        {state.kind === "paygoods_submitted" && state.receipt && (
+          <div className="space-y-1 text-xs text-cf-muted">
+            <p>Reference: {state.receipt.originatorConversationId}</p>
+            <p>Response code: {state.receipt.resultCode ?? "—"}</p>
+          </div>
+        )}
+        <button type="button" onClick={onReset} className="text-xs text-cf-muted hover:text-cf-text underline">
+          Start over
+        </button>
+      </div>
+    );
+  }
+
+  if (state.kind === "paygoods_success") {
+    return (
+      <div className="cf-card space-y-2 border border-cf-success/40 bg-cf-success/10 p-5">
+        <div className="flex items-center gap-3">
+          <CheckCircle className="h-5 w-5 shrink-0 text-cf-success" />
+          <p className="font-display text-base font-semibold text-cf-success">Business Buy Goods confirmed</p>
+        </div>
+        <p className="text-sm text-cf-muted">{state.receipt.description}</p>
+        <p className="text-sm font-semibold text-cf-text">{formatKes(state.receipt.amount)}</p>
+        {state.receipt.transactionId && (
+          <p className="text-[11px] text-cf-muted">M-Pesa receipt: {state.receipt.transactionId}</p>
+        )}
+        <button type="button" onClick={onReset} className="text-xs text-cf-muted hover:text-cf-text underline">
+          Make another Buy Goods payment
+        </button>
+      </div>
+    );
+  }
+
+  if (state.kind === "paygoods_failed") {
+    return (
+      <div className="cf-card space-y-2 border border-cf-danger/40 bg-cf-danger/10 p-5">
+        <div className="flex items-center gap-3">
+          <XCircle className="h-5 w-5 shrink-0 text-cf-danger" />
+          <p className="font-display text-base font-semibold text-cf-danger">Business Buy Goods failed</p>
+        </div>
+        <p className="text-sm text-cf-muted">{state.message}</p>
+        <button type="button" onClick={onReset} className="text-xs text-cf-muted hover:text-cf-text underline">
+          Try again
+        </button>
+      </div>
+    );
+  }
+
+  if (state.kind === "paygoods_timeout") {
+    return (
+      <div className="cf-card space-y-2 border border-cf-warning/40 bg-cf-warning/10 p-5">
+        <div className="flex items-center gap-3">
+          <Clock className="h-5 w-5 shrink-0 text-cf-warning" />
+          <p className="font-display text-base font-semibold text-cf-warning">Business Buy Goods queued — no response yet</p>
         </div>
         <p className="text-sm text-cf-muted">
           Daraja has not returned a result within the queue window. Reference: {state.reference}
@@ -495,180 +525,7 @@ function STKPushForm({ status, onSuccess }: { status: MpesaStatus | null; onSucc
   );
 }
 
-function QRForm({ status, onSuccess }: { status: MpesaStatus | null; onSuccess: () => void }) {
-  const { entityId } = useEntity();
-  const snapshot = useEntityData();
-  const toast = useToast();
-
-  const [amount, setAmount] = useState("");
-  const [reference, setReference] = useState("");
-  const [merchantName, setMerchantName] = useState("Cash-Flow");
-  const [trxCode, setTrxCode] = useState<"BG" | "PA">("BG");
-  const [accountId, setAccountId] = useState(snapshot.accounts[0]?.id ?? "");
-  const [qrState, setQrState] = useState<PayState>({ kind: "idle" });
-  const [error, setError] = useState<string | null>(null);
-
-  const configured = status?.configured ?? false;
-  const field = "w-full rounded-xl border border-cf-border bg-cf-surface-2 px-3 py-3 text-sm text-cf-text outline-none focus:border-cf-primary/50 sm:py-2.5";
-
-  function validate(): string | null {
-    const n = Number(amount);
-    if (!amount || isNaN(n) || n <= 0) return "Amount must be at least KES 1.";
-    if (!reference.trim()) return "Reference is required.";
-    if (!accountId) return "Please select an account.";
-    return null;
-  }
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    const err = validate();
-    if (err) { setError(err); return; }
-    execute();
-  }
-
-  async function execute() {
-    setQrState({ kind: "qr_loading" });
-    setError(null);
-    try {
-      const res = await generateMpesaQR({
-        amount: Number(amount),
-        reference: reference.trim(),
-        merchantName: merchantName.trim() || undefined,
-        trxCode,
-        entityId,
-        accountId,
-      });
-
-      if (!res.success) {
-        setQrState({ kind: "qr_failed", message: res.message });
-        toast(res.message, "error");
-        return;
-      }
-
-      setQrState({
-        kind: "qr_success",
-        qrCode: res.qrCode ?? "",
-        requestId: res.requestId,
-      });
-      toast("QR code generated successfully.", "success");
-      onSuccess();
-    } catch (err) {
-      const msg = friendlyError(err, "Could not generate M-Pesa QR code. Please try again.");
-      setQrState({ kind: "qr_failed", message: msg });
-      toast(msg, "error");
-    }
-  }
-
-  const busy = qrState.kind === "qr_loading";
-
-  return (
-    <>
-      <StatusCard state={qrState} onReset={() => { setQrState({ kind: "idle" }); setError(null); }} />
-
-      {(qrState.kind === "idle" || qrState.kind === "qr_failed") && (
-        <form onSubmit={handleSubmit} className="cf-card space-y-4 p-5">
-          <div className="flex items-center justify-between gap-3">
-            <h3 className="font-display text-lg font-semibold">M-Pesa Dynamic QR</h3>
-            <MpesaBadge />
-          </div>
-
-          {!configured && (
-            <div className="rounded-xl border border-cf-warning/40 bg-cf-warning/10 px-4 py-3 text-sm text-cf-text-secondary">
-              <p className="font-medium text-cf-text">Daraja credentials not configured</p>
-              <p className="mt-1 text-xs text-cf-muted">
-                Add <code>DARAJA_CONSUMER_KEY</code>, <code>DARAJA_CONSUMER_SECRET</code>,{" "}
-                <code>DARAJA_SHORTCODE</code>, and <code>DARAJA_PASSKEY</code> to{" "}
-                <code>backend/.env</code>, then restart the API.
-              </p>
-            </div>
-          )}
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="block space-y-1.5 text-sm">
-              <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">
-                Amount (KES)
-              </span>
-              <input
-                type="number"
-                inputMode="numeric"
-                required
-                min={1}
-                step={0.01}
-                placeholder="100"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className={field}
-              />
-            </label>
-            <label className="block space-y-1.5 text-sm">
-              <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">
-                Reference
-              </span>
-              <input
-                type="text"
-                required
-                maxLength={20}
-                placeholder="INV-001"
-                value={reference}
-                onChange={(e) => setReference(e.target.value)}
-                className={field}
-              />
-            </label>
-            <label className="block space-y-1.5 text-sm">
-              <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">
-                Merchant name
-              </span>
-              <input
-                type="text"
-                maxLength={10}
-                value={merchantName}
-                onChange={(e) => setMerchantName(e.target.value)}
-                className={field}
-              />
-            </label>
-            <label className="block space-y-1.5 text-sm">
-              <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">
-                Transaction code
-              </span>
-              <select value={trxCode} onChange={(e) => setTrxCode(e.target.value as "BG" | "PA")} className={field}>
-                <option value="BG">BG — Buy Goods</option>
-                <option value="PA">PA — Pay Bill</option>
-              </select>
-            </label>
-            <label className="block space-y-1.5 text-sm sm:col-span-2">
-              <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">
-                Debit from account
-              </span>
-              <select value={accountId} onChange={(e) => setAccountId(e.target.value)} className={field}>
-                {snapshot.accounts.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.name} — {formatKes(a.balance)}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          {error && <p className="text-sm text-cf-danger">{error}</p>}
-
-          <button
-            type="submit"
-            disabled={busy || !configured}
-            className={cn(
-              "w-full rounded-full px-5 py-3 text-sm font-semibold text-white disabled:opacity-60 sm:w-auto",
-              MPESA_GREEN_BG,
-            )}
-          >
-            {busy ? "Generating…" : "Generate M-Pesa QR"}
-          </button>
-        </form>
-      )}
-    </>
-  );
-}
-
-function B2BForm({ status, onSuccess }: { status: MpesaStatus | null; onSuccess: () => void }) {
+function B2BForm({ status, onSuccess, mode = "buy-goods" }: { status: MpesaStatus | null; onSuccess: () => void; mode?: "buy-goods" | "pay-bill" }) {
   const { entityId } = useEntity();
   const snapshot = useEntityData();
   const toast = useToast();
@@ -684,6 +541,7 @@ function B2BForm({ status, onSuccess }: { status: MpesaStatus | null; onSuccess:
 
   const configured = status?.configured ?? false;
   const field = "w-full rounded-xl border border-cf-border bg-cf-surface-2 px-3 py-3 text-sm text-cf-text outline-none focus:border-cf-primary/50 sm:py-2.5";
+  const isBuyGoods = mode === "buy-goods";
 
   function validate(): string | null {
     const n = Number(amount);
@@ -699,15 +557,25 @@ function B2BForm({ status, onSuccess }: { status: MpesaStatus | null; onSuccess:
     setB2bState({ kind: "loading" });
     setError(null);
     try {
-      const res = await initiateB2BPayment({
-        amount: Math.round(Number(amount)),
-        accountReference: accountRef.trim().slice(0, 13),
-        partyB: partyB.trim() || undefined,
-        requester: requester.trim() || undefined,
-        remarks: remarks.trim() || "Cash-Flow B2B",
-        entityId,
-        accountId,
-      });
+      const res = isBuyGoods
+        ? await initiateB2BPayGoods({
+            amount: Math.round(Number(amount)),
+            accountReference: accountRef.trim().slice(0, 13),
+            partyB: partyB.trim() || undefined,
+            requester: requester.trim() || undefined,
+            remarks: remarks.trim() || "Cash-Flow B2B",
+            entityId,
+            accountId,
+          })
+        : await initiateB2BPayment({
+            amount: Math.round(Number(amount)),
+            accountReference: accountRef.trim().slice(0, 13),
+            partyB: partyB.trim() || undefined,
+            requester: requester.trim() || undefined,
+            remarks: remarks.trim() || "Cash-Flow B2B",
+            entityId,
+            accountId,
+          });
 
       if (!res.success) {
         setB2bState({ kind: "b2b_failed", message: res.message });
@@ -716,8 +584,14 @@ function B2BForm({ status, onSuccess }: { status: MpesaStatus | null; onSuccess:
       }
 
       const reference = res.reference ?? res.originator_conversation_id ?? res.conversation_id ?? "";
+      const submittedKind = isBuyGoods ? "paygoods_submitted" : "b2b_submitted";
+      const pollingKind = isBuyGoods ? "paygoods_polling" : "b2b_polling";
+      const successKind = isBuyGoods ? "paygoods_success" : "b2b_success";
+      const failedKind = isBuyGoods ? "paygoods_failed" : "b2b_failed";
+      const timeoutKind = isBuyGoods ? "paygoods_timeout" : "b2b_timeout";
+
       setB2bState({
-        kind: "b2b_submitted",
+        kind: submittedKind,
         reference,
         receipt: {
           originatorConversationId: reference,
@@ -733,10 +607,15 @@ function B2BForm({ status, onSuccess }: { status: MpesaStatus | null; onSuccess:
           transactionId: null,
         },
       });
-      toast("B2B payment submitted. Awaiting Daraja confirmation.", "success");
+      toast(
+        isBuyGoods
+          ? "Business Buy Goods submitted. Awaiting Daraja confirmation."
+          : "B2B payment submitted. Awaiting Daraja confirmation.",
+        "success"
+      );
 
       if (reference) {
-        setB2bState({ kind: "b2b_polling", reference });
+        setB2bState({ kind: pollingKind, reference });
         let attempts = 0;
         const interval = setInterval(async () => {
           attempts++;
@@ -744,37 +623,46 @@ function B2BForm({ status, onSuccess }: { status: MpesaStatus | null; onSuccess:
             const payment = await fetchB2BPayment(reference);
             if (payment.status === "completed") {
               clearInterval(interval);
-              setB2bState({ kind: "b2b_success", receipt: payment });
+              setB2bState({ kind: successKind, receipt: payment });
               onSuccess();
-              toast("B2B payment confirmed!", "success");
+              toast(
+                isBuyGoods
+                  ? "Business Buy Goods confirmed!"
+                  : "B2B payment confirmed!",
+                "success"
+              );
             } else if (payment.status === "failed") {
               clearInterval(interval);
               setB2bState({
-                kind: "b2b_failed",
-                message: payment.resultDesc || "B2B payment was not completed.",
+                kind: failedKind,
+                message: payment.resultDesc || "Payment was not completed.",
               });
             } else if (payment.status === "timeout") {
               clearInterval(interval);
-              setB2bState({ kind: "b2b_timeout", reference });
+              setB2bState({ kind: timeoutKind, reference });
             }
           } catch {
             // Not yet — keep polling
           }
           if (attempts >= 12) {
             clearInterval(interval);
-            setB2bState({ kind: "b2b_submitted", reference, receipt: {
-              originatorConversationId: reference,
-              status: "submitted",
-              amount: Math.round(Number(amount)),
-              description: `M-Pesa B2B — ${accountRef}`,
-              date: new Date().toISOString(),
-              partyA: null,
-              partyB: partyB || null,
-              accountReference: accountRef,
-              resultCode: null,
-              resultDesc: null,
-              transactionId: null,
-            } });
+            setB2bState({
+              kind: submittedKind,
+              reference,
+              receipt: {
+                originatorConversationId: reference,
+                status: "submitted",
+                amount: Math.round(Number(amount)),
+                description: `M-Pesa B2B — ${accountRef}`,
+                date: new Date().toISOString(),
+                partyA: null,
+                partyB: partyB || null,
+                accountReference: accountRef,
+                resultCode: null,
+                resultDesc: null,
+                transactionId: null,
+              },
+            });
           }
         }, 5000);
       }
@@ -802,7 +690,9 @@ function B2BForm({ status, onSuccess }: { status: MpesaStatus | null; onSuccess:
       {(b2bState.kind === "idle" || b2bState.kind === "b2b_failed") && (
         <form onSubmit={handleSubmit} className="cf-card space-y-4 p-5">
           <div className="flex items-center justify-between gap-3">
-            <h3 className="font-display text-lg font-semibold">Business Buy Goods (B2B)</h3>
+            <h3 className="font-display text-lg font-semibold">
+              {isBuyGoods ? "Business Buy Goods" : "Business Pay Bill"}
+            </h3>
             <MpesaBadge />
           </div>
 
@@ -864,11 +754,12 @@ function B2BForm({ status, onSuccess }: { status: MpesaStatus | null; onSuccess:
               MPESA_GREEN_BG,
             )}
           >
-            {busy ? "Submitting…" : "Submit B2B Payment"}
+            {busy ? "Submitting…" : isBuyGoods ? "Submit Buy Goods" : "Submit Pay Bill"}
           </button>
           <p className="text-[11px] text-cf-muted">
-            B2B is asynchronous. Submission only means Daraja accepted the request — final
-            success comes from the ResultURL callback.
+            {isBuyGoods
+              ? "Business Buy Goods is asynchronous. Submission only means Daraja accepted the request — final success comes from the ResultURL callback."
+              : "Business Pay Bill is asynchronous. Submission only means Daraja accepted the request — final success comes from the ResultURL callback."}
           </p>
         </form>
       )}
@@ -880,7 +771,7 @@ export default function PaymentsPage() {
   const { refresh } = useEntity();
   const [status, setStatus] = useState<MpesaStatus | null>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
-  const [tab, setTab] = useState<"stk" | "qr" | "b2b">("stk");
+  const [tab, setTab] = useState<"stk" | "b2b" | "pay-goods">("stk");
 
   useEffect(() => {
     void fetchMpesaStatus()
@@ -892,7 +783,7 @@ export default function PaymentsPage() {
     <div className="mx-auto max-w-6xl space-y-6">
       <PageHeader
         title="Payments"
-        subtitle="M-Pesa payments — STK Push or Dynamic QR, powered by Safaricom Daraja."
+        subtitle="M-Pesa payments — STK Push, Business Pay Bill, and Business Buy Goods, powered by Safaricom Daraja."
         actions={
           <div className="flex items-center gap-2">
             <StatusPill status={status?.configured ? "connected" : "pending"} />
@@ -920,7 +811,7 @@ export default function PaymentsPage() {
               Safaricom Daraja
             </p>
             <p className="text-sm text-cf-muted">
-              M-Pesa STK Push · Dynamic QR · Sandbox environment
+              M-Pesa STK Push · Sandbox environment
             </p>
           </div>
           <div className="flex shrink-0 flex-col items-end gap-2">
@@ -932,7 +823,7 @@ export default function PaymentsPage() {
                 <dt>Environment</dt>
                 <dd className="text-cf-text capitalize">{status.environment}</dd>
                 <dt>Methods</dt>
-                <dd className="text-cf-text">STK Push, Dynamic QR</dd>
+                <dd className="text-cf-text">STK Push</dd>
               </dl>
             )}
           </div>
@@ -951,16 +842,7 @@ export default function PaymentsPage() {
               ? "bg-gradient-to-r from-cf-primary to-cf-primary-deep text-white shadow-md shadow-cf-primary/25"
               : "text-cf-muted hover:text-cf-text",
           )}>
-          STK Push
-        </button>
-        <button type="button" onClick={() => setTab("qr")}
-          className={cn(
-            "rounded-full px-4 py-2 text-sm font-semibold transition-colors",
-            tab === "qr"
-              ? "bg-gradient-to-r from-cf-primary to-cf-primary-deep text-white shadow-md shadow-cf-primary/25"
-              : "text-cf-muted hover:text-cf-text",
-          )}>
-          Dynamic QR
+          M-Pesa Express
         </button>
         <button type="button" onClick={() => setTab("b2b")}
           className={cn(
@@ -969,13 +851,22 @@ export default function PaymentsPage() {
               ? "bg-gradient-to-r from-cf-primary to-cf-primary-deep text-white shadow-md shadow-cf-primary/25"
               : "text-cf-muted hover:text-cf-text",
           )}>
+          Business Pay Bill
+        </button>
+        <button type="button" onClick={() => setTab("pay-goods")}
+          className={cn(
+            "rounded-full px-4 py-2 text-sm font-semibold transition-colors",
+            tab === "pay-goods"
+              ? "bg-gradient-to-r from-cf-primary to-cf-primary-deep text-white shadow-md shadow-cf-primary/25"
+              : "text-cf-muted hover:text-cf-text",
+          )}>
           Business Buy Goods
         </button>
       </div>
 
       {tab === "stk" && (<STKPushForm status={status} onSuccess={() => refresh()} />)}
-      {tab === "qr" && (<QRForm status={status} onSuccess={() => refresh()} />)}
-      {tab === "b2b" && (<B2BForm status={status} onSuccess={() => refresh()} />)}
+      {tab === "b2b" && (<B2BForm status={status} onSuccess={() => refresh()} mode="pay-bill" />)}
+      {tab === "pay-goods" && (<B2BForm status={status} onSuccess={() => refresh()} mode="buy-goods" />)}
 
       {/* App Sandbox — Open My Portal */}
       <section className="cf-card space-y-4 p-5">
@@ -996,7 +887,7 @@ export default function PaymentsPage() {
           </div>
           <div className="rounded-xl border border-cf-border bg-[var(--cf-inset)] px-4 py-3">
             <p className="text-[10px] uppercase tracking-wide text-cf-muted">Payment method</p>
-            <p className="mt-1 text-sm font-semibold text-cf-text">M-Pesa STK Push + Dynamic QR</p>
+              <p className="mt-1 text-sm font-semibold text-cf-text">M-Pesa STK Push + Business Pay Bill + Business Buy Goods</p>
           </div>
         </div>
         <a
