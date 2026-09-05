@@ -36,32 +36,6 @@ export type PaymentRecord = {
   date: string;
 };
 
-export type QRGenerateResponse = {
-  success: boolean;
-  message: string;
-  qrCode: string | null;
-  requestId: string | null;
-  darajaError?: string;
-};
-
-export async function generateMpesaQR(body: {
-  amount: number;
-  reference: string;
-  merchantName?: string;
-  trxCode?: "BG" | "PA" | "SM" | "SB";
-  entityId?: string;
-  accountId?: string;
-}): Promise<QRGenerateResponse> {
-  return apiPost<QRGenerateResponse>("/mpesa/qr", {
-    amount: body.amount,
-    reference: body.reference,
-    merchant_name: body.merchantName,
-    trx_code: body.trxCode ?? "BG",
-    entity_id: body.entityId,
-    account_id: body.accountId,
-  });
-}
-
 export async function fetchMpesaStatus(): Promise<MpesaStatus> {
   const res = await apiGet<{ success: boolean; data: MpesaStatus }>("/mpesa/status");
   return res.data;
@@ -123,6 +97,26 @@ export async function initiateB2BPayment(body: {
   accountId?: string;
 }): Promise<B2BPaymentResponse> {
   return apiPost<B2BPaymentResponse>("/mpesa/b2b", {
+    amount: body.amount,
+    account_reference: body.accountReference,
+    party_b: body.partyB,
+    requester: body.requester,
+    remarks: body.remarks ?? "Cash-Flow B2B",
+    entity_id: body.entityId,
+    account_id: body.accountId,
+  });
+}
+
+export async function initiateB2BPayGoods(body: {
+  amount: number;
+  accountReference: string;
+  partyB?: string;
+  requester?: string;
+  remarks?: string;
+  entityId?: string;
+  accountId?: string;
+}): Promise<B2BPaymentResponse> {
+  return apiPost<B2BPaymentResponse>("/mpesa/b2b/pay-goods", {
     amount: body.amount,
     account_reference: body.accountReference,
     party_b: body.partyB,
