@@ -341,3 +341,183 @@ def extract_b2b_result_parameters(parameters: list | None) -> dict:
             continue
         out[str(key)] = value
     return out
+
+
+# ---------------------------------------------------------------------------
+# B2C helpers — track and settle BusinessPayToBulk / Account Top Up
+# ---------------------------------------------------------------------------
+
+def track_pending_b2c(
+    db: Session,
+    *,
+    entity_id: str,
+    account_id: str,
+    amount: float,
+    originator_conversation_id: str,
+    conversation_id: str,
+    party_a: str,
+    party_b: str,
+    account_reference: str,
+    description: str,
+    requester: str | None = None,
+) -> models.Transaction | None:
+    """Record a B2C transaction in the SUBMITTED state.
+
+    Idempotent: a duplicate (OriginatorConversationID, ConversationID) pair
+    is rejected — the existing row is returned unchanged.
+    """
+    if not originator_conversation_id and not conversation_id:
+        return None
+
+    existing = (
+        db.query(models.Transaction)
+        .filter(
+            models.Transaction.Metadata["originator_conversation_id"].astext
+            == originator_conversation_id
+        )
+        .one_or_none()
+    )
+    if existing is not None:
+        return existing
+
+    metadata = {
+        "provider": "daraja_b2c",
+        "originator_conversation_id": originator_conversation_id,
+        "conversation_id": conversation_id,
+        "party_a": party_a,
+        "party_b": party_b,
+        "account_reference": account_reference,
+    }
+    if requester:
+        metadata["requester"] = requester
+
+    tx = models.Transaction(
+        EntityId=entity_id,
+        AccountId=account_id,
+        Date=_now(),
+        Description=description,
+        Amount=amount,
+        Category="M-Pesa B2C",
+        Type="outflow",
+        Provenance="actual",
+        PaymentReference=originator_conversation_id or conversation_id,
+        Status="submitted",
+        Metadata=metadata,
+    )
+    db.add(tx)
+    db.commit()
+    db.refresh(tx)
+    return tx
+
+
+def settle_b2c(
+    db: Session,
+    *,
+    originator_conversation_id: str | None,
+    conversation_id: str | None,
+    result_code: int | str,
+    result_desc: str | None,
+    transaction_id: str | None = None,
+    extra_parameters: dict | None = None,
+) -> models.Transaction | None:
+    """Apply the async B2C ResultURL callback to a tracked transaction.
+
+    Idempotent: if the transaction is already terminal (completed / failed),
+    subsequent callbacks for the same conversation are ignored.
+    """
+    if not originator_conversation_id and not conversation_id:
+        return None
+
+    tx: models.Transaction | None = None
+    if originator_conversation_id:
+        tx = (
+            db.query(models.Transaction)
+            .filter(
+                models.Transaction.Metadata["originator_conversation_id"].astext
+                == originator_conversation_id
+            )
+            .one_or_none()
+        )
+    if tx is None and conversation_id:
+        tx = (
+            db.query(models.Transaction)
+            .filter(
+                models.Transaction.Metadata["conversation_id"].astext
+                == conversation_id
+            )
+            .one_or_none()
+        )
+    if tx is None:
+        return None
+
+    if tx.Status in ("completed", "failed", "timeout"):
+        return tx
+
+    success = str(result_code) == "0"
+    tx.Status = "completed" if success else "failed"
+
+    existing_meta = dict(tx.Metadata or {})
+    existing_meta.update(
+        {
+            "result_code": str(result_code),
+            "result_desc": result_desc,
+        }
+    )
+    if transaction_id:
+        existing_meta["transaction_id"] = transaction_id
+    if extra_parameters:
+        existing_meta["result_parameters"] = extra_parameters
+    tx.Metadata = existing_meta
+
+    if success:
+        _touch(db.get(models.Account, tx.AccountId), -tx.Amount)
+        if transaction_id:
+            tx.Description = f"{tx.Description} · {transaction_id}"
+
+    db.commit()
+    db.refresh(tx)
+    return tx
+
+
+def timeout_b2c(
+    db: Session,
+    *,
+    originator_conversation_id: str | None,
+    conversation_id: str | None,
+) -> models.Transaction | None:
+    """Mark a B2C transaction as timed out."""
+    if not originator_conversation_id and not conversation_id:
+        return None
+
+    tx: models.Transaction | None = None
+    if originator_conversation_id:
+        tx = (
+            db.query(models.Transaction)
+            .filter(
+                models.Transaction.Metadata["originator_conversation_id"].astext
+                == originator_conversation_id
+            )
+            .one_or_none()
+        )
+    if tx is None and conversation_id:
+        tx = (
+            db.query(models.Transaction)
+            .filter(
+                models.Transaction.Metadata["conversation_id"].astext
+                == conversation_id
+            )
+            .one_or_none()
+        )
+    if tx is None:
+        return None
+
+    if tx.Status in ("completed", "failed", "timeout"):
+        return tx
+
+    tx.Status = "timeout"
+    existing_meta = dict(tx.Metadata or {})
+    existing_meta["queue_timeout"] = True
+    tx.Metadata = existing_meta
+    db.commit()
+    db.refresh(tx)
+    return tx

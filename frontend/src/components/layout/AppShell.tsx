@@ -19,7 +19,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="flex min-h-dvh items-center justify-center px-4">
+      <div className="flex min-h-dvh items-center justify-center px-4" suppressHydrationWarning>
         <p className="text-sm text-cf-muted">Checking session…</p>
       </div>
     );
@@ -27,7 +27,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 
   if (!user) {
     return (
-      <div className="flex min-h-dvh flex-col items-center justify-center gap-4 px-5">
+      <div className="flex min-h-dvh flex-col items-center justify-center gap-4 px-5" suppressHydrationWarning>
         <p className="text-sm text-cf-muted">Sign in required</p>
         <Link href="/signin" className="text-sm font-medium text-cf-primary hover:underline">
           Go to sign in

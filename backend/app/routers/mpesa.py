@@ -27,8 +27,11 @@ from app.daraja import get_b2b_service, get_stk_service, normalize_phone
 from app.daraja.completion import (
     extract_b2b_result_parameters,
     settle_b2b,
+    settle_b2c,
     timeout_b2b,
+    timeout_b2c,
     track_pending_b2b,
+    track_pending_b2c,
     track_pending_stk,
 )
 from app.db import get_db
@@ -265,6 +268,211 @@ class B2BPaymentResponse(BaseModel):
     response_description: str | None = None
     # Idempotency key for the frontend to poll status
     reference: str | None = None
+
+
+class B2CAccountTopUpRequest(BaseModel):
+    amount: float = Field(..., gt=0, description="Amount in KES")
+    account_reference: str = Field(..., max_length=13, description="≤13 chars per Daraja contract")
+    party_b: str | None = Field(default=None, max_length=20, description="Receiver shortcode (defaults to configured PartyB)")
+    requester: str | None = Field(default=None, description="Optional customer phone 07XX/2547XX/+2547XX")
+    remarks: str = Field(default="Cash-Flow B2C", max_length=100)
+    entity_id: str | None = None
+    account_id: str | None = None
+
+
+class B2CAccountTopUpResponse(BaseModel):
+    success: bool
+    status: str
+    message: str
+    originator_conversation_id: str | None = None
+    conversation_id: str | None = None
+    response_code: str | None = None
+    response_description: str | None = None
+    reference: str | None = None
+
+
+@router.post("/b2c/account-top-up", response_model=B2CAccountTopUpResponse)
+def b2c_account_top_up(
+    body: B2CAccountTopUpRequest,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Initiate a Safaricom Daraja B2C Account Top Up (BusinessPayToBulk).
+
+    The initial Daraja response (ResponseCode 0) only means the request was
+    accepted. The transaction is recorded in the SUBMITTED state and the
+    final status arrives asynchronously via the ResultURL callback.
+    """
+    s = get_settings()
+    if not s.daraja_b2b_configured:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "success": False,
+                "status": "error",
+                "message": (
+                    "B2C is not configured. Set DARAJA_B2B_INITIATOR, "
+                    "DARAJA_B2B_SECURITY_CREDENTIAL, DARAJA_B2B_PARTY_A, "
+                    "DARAJA_B2B_PARTY_B, DARAJA_B2B_RESULT_URL, and "
+                    "DARAJA_B2B_QUEUE_TIMEOUT_URL in backend/.env."
+                ),
+            },
+        )
+
+    try:
+        result = get_b2b_service().business_pay_to_bulk_request(
+            amount=body.amount,
+            account_reference=body.account_reference,
+            party_b=body.party_b,
+            requester=body.requester,
+            remarks=body.remarks,
+        )
+    except ValueError as exc:
+        return JSONResponse(status_code=422, content={"success": False, "status": "error", "message": str(exc)})
+    except RuntimeError as exc:
+        return JSONResponse(status_code=502, content={"success": False, "status": "error", "message": str(exc)})
+
+    originator = result.get("OriginatorConversationID")
+    conversation = result.get("ConversationID")
+    response_code = str(result.get("ResponseCode", ""))
+    response_description = result.get("ResponseDescription", "")
+
+    if response_code != "0":
+        return JSONResponse(
+            status_code=502,
+            content={
+                "success": False,
+                "status": "failed",
+                "message": f"Daraja B2C rejected the request: {response_description}",
+                "originator_conversation_id": originator,
+                "conversation_id": conversation,
+                "response_code": response_code,
+                "response_description": response_description,
+                "reference": originator or conversation,
+            },
+        )
+
+    if body.entity_id and body.account_id and (originator or conversation):
+        try:
+            track_pending_b2c(
+                db,
+                entity_id=body.entity_id,
+                account_id=body.account_id,
+                amount=float(body.amount),
+                originator_conversation_id=originator or "",
+                conversation_id=conversation or "",
+                party_a=s.daraja_b2b_party_a,
+                party_b=(body.party_b or s.daraja_b2b_party_b),
+                account_reference=body.account_reference[:13],
+                description=f"M-Pesa B2C Account Top Up — {body.account_reference}",
+                requester=body.requester,
+            )
+        except Exception:  # noqa: BLE001
+            pass
+
+    return B2CAccountTopUpResponse(
+        success=True,
+        status="SUBMITTED",
+        message="B2C account top-up request submitted successfully.",
+        originator_conversation_id=originator,
+        conversation_id=conversation,
+        response_code=response_code,
+        response_description=response_description,
+        reference=originator or conversation,
+    )
+
+
+@router.post("/b2c/result")
+async def b2c_result_callback(request: Request, db: Session = Depends(get_db)):
+    """Receive Safaricom's B2C ResultURL callback."""
+    try:
+        payload: dict[str, Any] = await request.json()
+    except Exception:
+        return {"ResultCode": 0, "ResultDesc": "Accepted"}
+
+    try:
+        result = payload.get("Result") or {}
+        result_code = result.get("ResultCode")
+        result_desc = result.get("ResultDesc")
+        originator = result.get("OriginatorConversationID")
+        conversation = result.get("ConversationID")
+        transaction_id = result.get("TransactionID")
+        parameters = result.get("ResultParameters", {}).get("ResultParameter", [])
+
+        extra = extract_b2b_result_parameters(parameters)
+
+        settle_b2c(
+            db,
+            originator_conversation_id=originator,
+            conversation_id=conversation,
+            result_code=result_code,
+            result_desc=result_desc,
+            transaction_id=transaction_id,
+            extra_parameters=extra,
+        )
+    except Exception:  # noqa: BLE001
+        pass
+
+    return {"ResultCode": 0, "ResultDesc": "Accepted"}
+
+
+@router.post("/b2c/queue-timeout")
+async def b2c_queue_timeout_callback(request: Request, db: Session = Depends(get_db)):
+    """Receive Safaricom's B2C QueueTimeOutURL callback."""
+    try:
+        payload: dict[str, Any] = await request.json()
+    except Exception:
+        return {"ResultCode": 0, "ResultDesc": "Accepted"}
+
+    try:
+        result = payload.get("Result") or payload
+        originator = result.get("OriginatorConversationID")
+        conversation = result.get("ConversationID")
+
+        timeout_b2c(
+            db,
+            originator_conversation_id=originator,
+            conversation_id=conversation,
+        )
+    except Exception:  # noqa: BLE001
+        pass
+
+    return {"ResultCode": 0, "ResultDesc": "Accepted"}
+
+
+@router.get("/b2c/payments/{originator_conversation_id}")
+def get_b2c_payment(
+    originator_conversation_id: str,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Look up a B2C payment by its OriginatorConversationID."""
+    tx = (
+        db.query(models.Transaction)
+        .filter(models.Transaction.PaymentReference == originator_conversation_id)
+        .one_or_none()
+    )
+    if tx is None:
+        return JSONResponse(
+            status_code=404, content={"success": False, "message": "Payment not found"}
+        )
+    meta = tx.Metadata or {}
+    return {
+        "success": True,
+        "data": {
+            "originatorConversationId": originator_conversation_id,
+            "status": tx.Status,
+            "amount": tx.Amount,
+            "description": tx.Description,
+            "date": tx.Date.isoformat().replace("+00:00", "Z"),
+            "partyA": meta.get("party_a"),
+            "partyB": meta.get("party_b"),
+            "accountReference": meta.get("account_reference"),
+            "resultCode": meta.get("result_code"),
+            "resultDesc": meta.get("result_desc"),
+            "transactionId": meta.get("transaction_id"),
+        },
+    }
 
 
 @router.post("/b2b", response_model=B2BPaymentResponse)

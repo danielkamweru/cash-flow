@@ -135,3 +135,61 @@ export async function fetchB2BPayment(
   );
   return res.data;
 }
+
+// ---------------------------------------------------------------------------
+// B2C — Account Top Up / BusinessPayToBulk
+// ---------------------------------------------------------------------------
+
+export type B2CAccountTopUpResponse = {
+  success: boolean;
+  status: string;
+  message: string;
+  originator_conversation_id: string | null;
+  conversation_id: string | null;
+  response_code: string | null;
+  response_description: string | null;
+  reference: string | null;
+};
+
+export type B2CPaymentRecord = {
+  originatorConversationId: string;
+  status: "submitted" | "completed" | "failed" | "timeout" | "pending";
+  amount: number;
+  description: string;
+  date: string;
+  partyA: string | null;
+  partyB: string | null;
+  accountReference: string | null;
+  resultCode: string | null;
+  resultDesc: string | null;
+  transactionId: string | null;
+};
+
+export async function initiateB2CAccountTopUp(body: {
+  amount: number;
+  accountReference: string;
+  partyB?: string;
+  requester?: string;
+  remarks?: string;
+  entityId?: string;
+  accountId?: string;
+}): Promise<B2CAccountTopUpResponse> {
+  return apiPost<B2CAccountTopUpResponse>("/mpesa/b2c/account-top-up", {
+    amount: body.amount,
+    account_reference: body.accountReference,
+    party_b: body.partyB,
+    requester: body.requester,
+    remarks: body.remarks ?? "Cash-Flow B2C",
+    entity_id: body.entityId,
+    account_id: body.accountId,
+  });
+}
+
+export async function fetchB2CPayment(
+  originatorConversationId: string,
+): Promise<B2CPaymentRecord> {
+  const res = await apiGet<{ success: boolean; data: B2CPaymentRecord }>(
+    `/mpesa/b2c/payments/${encodeURIComponent(originatorConversationId)}`,
+  );
+  return res.data;
+}

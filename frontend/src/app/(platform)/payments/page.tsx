@@ -9,10 +9,13 @@ import {
   initiateStkPush,
   initiateB2BPayment,
   initiateB2BPayGoods,
+  initiateB2CAccountTopUp,
   fetchB2BPayment,
+  fetchB2CPayment,
   type MpesaStatus,
   type PaymentRecord,
   type B2BPaymentRecord,
+  type B2CPaymentRecord,
 } from "@/lib/api/mpesa";
 import { useEntity, useEntityData } from "@/lib/context/EntityContext";
 import { cn, formatKes } from "@/lib/format";
@@ -45,7 +48,12 @@ type PayState =
   | { kind: "paygoods_polling"; reference: string }
   | { kind: "paygoods_success"; receipt: B2BPaymentRecord }
   | { kind: "paygoods_failed"; message: string }
-  | { kind: "paygoods_timeout"; reference: string };
+  | { kind: "paygoods_timeout"; reference: string }
+  | { kind: "b2c_submitted"; reference: string; receipt: B2CPaymentRecord }
+  | { kind: "b2c_polling"; reference: string }
+  | { kind: "b2c_success"; receipt: B2CPaymentRecord }
+  | { kind: "b2c_failed"; message: string }
+  | { kind: "b2c_timeout"; reference: string };
 
 function MpesaBadge() {
   return (
@@ -767,11 +775,205 @@ function B2BForm({ status, onSuccess, mode = "buy-goods" }: { status: MpesaStatu
   );
 }
 
+function B2CForm({ status, onSuccess }: { status: MpesaStatus | null; onSuccess: () => void }) {
+  const snapshot = useEntityData();
+  const toast = useToast();
+  const [b2cState, setB2cState] = useState<PayState>({ kind: "idle" });
+  const [amount, setAmount] = useState("");
+  const [partyB, setPartyB] = useState("");
+  const [remarks, setRemarks] = useState("Cash-Flow B2C");
+  const [accountId, setAccountId] = useState(snapshot.accounts[0]?.id ?? "");
+  const [error, setError] = useState<string | null>(null);
+
+  const configured = status?.configured ?? false;
+  const field = "w-full rounded-xl border border-cf-border bg-cf-surface-2 px-3 py-3 text-sm text-cf-text outline-none focus:border-cf-primary/50 sm:py-2.5";
+
+  function validate(): string | null {
+    const n = Number(amount);
+    if (!amount || isNaN(n) || n < 1) return "Amount must be at least KES 1.";
+    if (!partyB.trim()) return "Recipient phone is required.";
+    if (!accountId) return "Please select an account.";
+    return null;
+  }
+
+  async function execute() {
+    setB2cState({ kind: "loading" });
+    setError(null);
+    try {
+      const res = await initiateB2CAccountTopUp({
+        amount: Math.round(Number(amount)),
+        accountReference: "CASHFLOW",
+        partyB: partyB.trim(),
+        remarks: remarks.trim() || "Cash-Flow B2C",
+        entityId: snapshot.entity.id,
+        accountId,
+      });
+
+      if (!res.success) {
+        setB2cState({ kind: "b2c_failed", message: res.message });
+        toast(res.message, "error");
+        return;
+      }
+
+      const reference = res.reference ?? res.originator_conversation_id ?? res.conversation_id ?? "";
+
+      setB2cState({
+        kind: "b2c_submitted",
+        reference,
+        receipt: {
+          originatorConversationId: reference,
+          status: "submitted",
+          amount: Math.round(Number(amount)),
+          description: `M-Pesa B2C Account Top-Up — ${partyB}`,
+          date: new Date().toISOString(),
+          partyA: null,
+          partyB: partyB || null,
+          accountReference: null,
+          resultCode: res.response_code,
+          resultDesc: res.response_description,
+          transactionId: null,
+        },
+      });
+      toast("B2C Account Top-Up submitted. Awaiting Daraja confirmation.", "success");
+
+      if (reference) {
+        setB2cState({ kind: "b2c_polling", reference });
+        let attempts = 0;
+        const interval = setInterval(async () => {
+          attempts++;
+          try {
+            const payment = await fetchB2CPayment(reference);
+            if (payment.status === "completed") {
+              clearInterval(interval);
+              setB2cState({ kind: "b2c_success", receipt: payment });
+              onSuccess();
+              toast("B2C Account Top-Up confirmed!", "success");
+            } else if (payment.status === "failed") {
+              clearInterval(interval);
+              setB2cState({
+                kind: "b2c_failed",
+                message: payment.resultDesc || "Payment was not completed.",
+              });
+            } else if (payment.status === "timeout") {
+              clearInterval(interval);
+              setB2cState({ kind: "b2c_timeout", reference });
+            }
+          } catch {
+            // Not yet — keep polling
+          }
+          if (attempts >= 12) {
+            clearInterval(interval);
+            setB2cState({
+              kind: "b2c_submitted",
+              reference,
+              receipt: {
+                originatorConversationId: reference,
+                status: "submitted",
+                amount: Math.round(Number(amount)),
+                description: `M-Pesa B2C Account Top-Up — ${partyB}`,
+                date: new Date().toISOString(),
+                partyA: null,
+                partyB: partyB || null,
+                accountReference: null,
+                resultCode: null,
+                resultDesc: null,
+                transactionId: null,
+              },
+            });
+          }
+        }, 5000);
+      }
+    } catch (err) {
+      const msg = friendlyError(err, "Could not submit B2C payment. Please try again.");
+      setB2cState({ kind: "b2c_failed", message: msg });
+      toast(msg, "error");
+    }
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    const err = validate();
+    if (err) { setError(err); return; }
+    void execute();
+  }
+
+  const busy = b2cState.kind === "loading" || b2cState.kind === "b2c_polling";
+
+  return (
+    <>
+      <StatusCard state={b2cState} onReset={() => { setB2cState({ kind: "idle" }); setError(null); }} />
+
+      {(b2cState.kind === "idle" || b2cState.kind === "b2c_failed") && (
+        <form onSubmit={handleSubmit} className="cf-card space-y-4 p-5">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="font-display text-lg font-semibold">B2C Account Top-Up</h3>
+            <MpesaBadge />
+          </div>
+
+          {!configured && (
+            <div className="rounded-xl border border-cf-warning/40 bg-cf-warning/10 px-4 py-3 text-sm text-cf-text-secondary">
+              <p className="font-medium text-cf-text">Daraja B2C not configured</p>
+              <p className="mt-1 text-xs text-cf-muted">
+                Add <code>DARAJA_B2B_INITIATOR</code>, <code>DARAJA_B2B_SECURITY_CREDENTIAL</code>,{" "}
+                <code>DARAJA_B2B_PARTY_A</code>, <code>DARAJA_B2B_RESULT_URL</code> and <code>DARAJA_B2B_QUEUE_TIMEOUT_URL</code>{" "}
+                to <code>backend/.env</code>, then restart the API.
+              </p>
+            </div>
+          )}
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block space-y-1.5 text-sm">
+              <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Amount (KES)</span>
+              <input type="number" required min={1} step={1} placeholder="100"
+                value={amount} onChange={(e) => setAmount(e.target.value)} className={field} />
+            </label>
+            <label className="block space-y-1.5 text-sm">
+              <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Recipient phone (Party B)</span>
+              <input type="tel" required maxLength={13} placeholder="07XXXXXXXX"
+                value={partyB} onChange={(e) => setPartyB(e.target.value)} className={field} />
+            </label>
+            <label className="block space-y-1.5 text-sm sm:col-span-2">
+              <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Remarks</span>
+              <input type="text" maxLength={100}
+                value={remarks} onChange={(e) => setRemarks(e.target.value)} className={field} />
+            </label>
+            <label className="block space-y-1.5 text-sm sm:col-span-2">
+              <span className="text-xs font-medium uppercase tracking-wide text-cf-muted">Debit from account</span>
+              <select value={accountId} onChange={(e) => setAccountId(e.target.value)} className={field}>
+                {snapshot.accounts.map((a: { id: string; name: string; balance: number }) => (
+                  <option key={a.id} value={a.id}>{a.name} — {formatKes(a.balance)}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          {error && <p className="text-sm text-cf-danger">{error}</p>}
+
+          <button
+            type="submit"
+            disabled={busy || !configured}
+            className={cn(
+              "w-full rounded-full px-5 py-3 text-sm font-semibold text-white disabled:opacity-60 sm:w-auto",
+              MPESA_GREEN_BG,
+            )}
+          >
+            {busy ? "Submitting…" : "Submit Account Top-Up"}
+          </button>
+          <p className="text-[11px] text-cf-muted">
+            B2C Account Top-Up is asynchronous. Submission only means Daraja accepted the request — final success comes from the ResultURL callback.
+          </p>
+        </form>
+      )}
+    </>
+  );
+}
+
 export default function PaymentsPage() {
   const { refresh } = useEntity();
   const [status, setStatus] = useState<MpesaStatus | null>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
-  const [tab, setTab] = useState<"stk" | "b2b" | "pay-goods">("stk");
+  const [tab, setTab] = useState<"stk" | "b2b" | "pay-goods" | "b2c">("stk");
 
   useEffect(() => {
     void fetchMpesaStatus()
@@ -862,11 +1064,21 @@ export default function PaymentsPage() {
           )}>
           Business Buy Goods
         </button>
+        <button type="button" onClick={() => setTab("b2c")}
+          className={cn(
+            "rounded-full px-4 py-2 text-sm font-semibold transition-colors",
+            tab === "b2c"
+              ? "bg-gradient-to-r from-cf-primary to-cf-primary-deep text-white shadow-md shadow-cf-primary/25"
+              : "text-cf-muted hover:text-cf-text",
+          )}>
+          B2C Account Top-Up
+        </button>
       </div>
 
       {tab === "stk" && (<STKPushForm status={status} onSuccess={() => refresh()} />)}
       {tab === "b2b" && (<B2BForm status={status} onSuccess={() => refresh()} mode="pay-bill" />)}
       {tab === "pay-goods" && (<B2BForm status={status} onSuccess={() => refresh()} mode="buy-goods" />)}
+      {tab === "b2c" && (<B2CForm status={status} onSuccess={() => refresh()} />)}
 
       {/* App Sandbox — Open My Portal */}
       <section className="cf-card space-y-4 p-5">

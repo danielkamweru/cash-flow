@@ -470,6 +470,101 @@ class DarajaB2BService:
 
         return body
 
+    def business_pay_to_bulk_request(
+        self,
+        *,
+        amount: float,
+        account_reference: str,
+        party_b: str | None = None,
+        requester: str | None = None,
+        remarks: str = "Cash-Flow B2C",
+    ) -> dict:
+        """Submit a BusinessPayToBulk request to Daraja.
+
+        Returns the raw Daraja response dict containing
+        ``OriginatorConversationID`` and ``ConversationID`` along with
+        ``ResponseCode``/``ResponseDescription``.
+
+        Raises:
+            ValueError: invalid input (amount, reference length, etc.)
+            RuntimeError: Daraja gateway or configuration error.
+        """
+        s = self._settings
+        self._require_configured()
+
+        # Validation
+        try:
+            amount_int = int(amount)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"Amount must be numeric, got {amount!r}") from exc
+        if amount_int < 1:
+            raise ValueError("Amount must be at least KES 1.")
+        if not account_reference or not account_reference.strip():
+            raise ValueError("AccountReference is required.")
+        account_ref_clean = account_reference.strip()[:13]
+        if len(account_ref_clean) < 1:
+            raise ValueError("AccountReference is required.")
+
+        receiver = (party_b or s.daraja_b2b_party_b).strip()
+        if not receiver:
+            raise ValueError("PartyB (receiver shortcode) is required.")
+
+        normalised_requester: str | None = None
+        if requester:
+            try:
+                normalised_requester = normalize_phone(requester)
+            except ValueError as exc:
+                raise ValueError(f"Invalid requester phone: {exc}") from exc
+
+        token = self._auth.get_access_token()
+
+        payload: dict = {
+            "Initiator": s.daraja_b2b_initiator,
+            "SecurityCredential": s.daraja_b2b_security_credential,
+            "CommandID": "BusinessPayToBulk",
+            "SenderIdentifierType": "4",
+            "RecieverIdentifierType": "4",
+            "Amount": str(amount_int),
+            "PartyA": s.daraja_b2b_party_a,
+            "PartyB": receiver,
+            "AccountReference": account_ref_clean,
+            "Remarks": (remarks or "Cash-Flow B2C")[:100],
+            "QueueTimeOutURL": s.daraja_b2b_queue_timeout_url,
+            "ResultURL": s.daraja_b2b_result_url,
+        }
+        if normalised_requester:
+            payload["Requester"] = normalised_requester
+
+        with httpx.Client(timeout=30.0) as client:
+            try:
+                resp = client.post(
+                    s.daraja_b2b_url,
+                    headers={
+                        "Authorization": f"Bearer {token}",
+                        "Content-Type": "application/json",
+                    },
+                    json=payload,
+                )
+            except httpx.HTTPError as exc:
+                raise RuntimeError(
+                    f"Daraja B2C request failed: {exc}"
+                ) from exc
+
+        try:
+            body = resp.json()
+        except Exception:
+            body = {"errorMessage": resp.text[:300]}
+
+        if resp.status_code not in (200, 202):
+            msg = (
+                body.get("errorMessage")
+                or body.get("ResponseDescription")
+                or resp.text[:200]
+            )
+            raise RuntimeError(f"Daraja B2C failed ({resp.status_code}): {msg}")
+
+        return body
+
 
 # ---------------------------------------------------------------------------
 # Module-level singletons

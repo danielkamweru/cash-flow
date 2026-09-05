@@ -436,3 +436,113 @@ class TestDarajaB2BService:
                     account_reference="TEST-001",
                     party_b="   ",
                 )
+
+
+# ---------------------------------------------------------------------------
+# B2C — Account Top-Up / BusinessPayToBulk
+# ---------------------------------------------------------------------------
+
+class TestDarajaB2CService:
+    def _make_svc(self, token="mock_token"):
+        mock_auth = MagicMock()
+        mock_auth.get_access_token.return_value = token
+        return DarajaB2BService(settings=_settings(), auth=mock_auth)
+
+    def test_b2c_account_top_up_success(self):
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {
+            "OriginatorConversationID": "B2C-TOP-001",
+            "ConversationID": "CONV-B2C-001",
+            "ResponseCode": "0",
+            "ResponseDescription": "Accept the service request successfully.",
+        }
+
+        with patch("httpx.Client") as mock_client_cls:
+            mock_client = MagicMock()
+            mock_client.__enter__ = MagicMock(return_value=mock_client)
+            mock_client.__exit__ = MagicMock(return_value=False)
+            mock_client.post.return_value = mock_resp
+            mock_client_cls.return_value = mock_client
+
+            svc = self._make_svc()
+            result = svc.business_pay_to_bulk_request(
+                amount=200,
+                account_reference="CASHFLOW",
+                party_b="600000",
+                requester="254708374149",
+            )
+
+        assert result["ResponseCode"] == "0"
+        assert result["OriginatorConversationID"] == "B2C-TOP-001"
+
+    def test_b2c_missing_configured(self):
+        svc = self._make_svc()
+        svc._settings = _settings(
+            daraja_b2b_initiator="",
+            daraja_b2b_security_credential="",
+            daraja_b2b_party_a="",
+            daraja_b2b_party_b="",
+            daraja_b2b_result_url="",
+            daraja_b2b_queue_timeout_url="",
+        )
+        with pytest.raises(RuntimeError, match="not configured"):
+            svc.business_pay_to_bulk_request(
+                amount=200,
+                account_reference="CASHFLOW",
+            )
+
+    def test_b2c_invalid_amount(self):
+        svc = self._make_svc()
+        with pytest.raises(ValueError, match="at least KES 1"):
+            svc.business_pay_to_bulk_request(
+                amount=0,
+                account_reference="CASHFLOW",
+            )
+
+    def test_b2c_missing_reference(self):
+        svc = self._make_svc()
+        with pytest.raises(ValueError, match="AccountReference is required"):
+            svc.business_pay_to_bulk_request(
+                amount=200,
+                account_reference="",
+            )
+
+    def test_b2c_missing_receiver(self):
+        svc = self._make_svc()
+        with patch.object(DarajaB2BService, "_require_configured"):
+            with pytest.raises(ValueError, match="PartyB"):
+                svc.business_pay_to_bulk_request(
+                    amount=200,
+                    account_reference="CASHFLOW",
+                    party_b="   ",
+                )
+
+    def test_b2c_invalid_requester(self):
+        svc = self._make_svc()
+        with patch.object(DarajaB2BService, "_require_configured"):
+            with pytest.raises(ValueError, match="Invalid requester phone"):
+                svc.business_pay_to_bulk_request(
+                    amount=200,
+                    account_reference="CASHFLOW",
+                    requester="+12025551234",
+                )
+
+    def test_b2c_daraja_error(self):
+        mock_resp = MagicMock()
+        mock_resp.status_code = 400
+        mock_resp.json.return_value = {"errorMessage": "Bad Request", "errorCode": "400.002.07"}
+
+        with patch("httpx.Client") as mock_client_cls:
+            mock_client = MagicMock()
+            mock_client.__enter__ = MagicMock(return_value=mock_client)
+            mock_client.__exit__ = MagicMock(return_value=False)
+            mock_client.post.return_value = mock_resp
+            mock_client_cls.return_value = mock_client
+
+            svc = self._make_svc()
+            with pytest.raises(RuntimeError, match="Daraja B2C failed"):
+                svc.business_pay_to_bulk_request(
+                    amount=200,
+                    account_reference="CASHFLOW",
+                )
