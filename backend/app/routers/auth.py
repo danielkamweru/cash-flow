@@ -66,6 +66,15 @@ def signup(body: SignUpRequest, db: Session = Depends(get_db)):
     if not body.pin.isdigit():
         return JSONResponse(status_code=400, content={"error": "Transaction PIN must be 4 digits"})
 
+    user = models.User(
+        Id=new_id(),
+        Name=body.name.strip(),
+        Email=email,
+        Phone=(body.phone or "").strip() or None,
+        Location="Kenya",
+        PasswordHash=hash_password(body.password),
+        PinHash=hash_pin(body.pin),
+    )
     db.add(user)
     db.flush()
 
