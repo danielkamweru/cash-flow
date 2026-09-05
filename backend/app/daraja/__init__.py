@@ -217,74 +217,6 @@ class DarajaSTKService:
 
         return body
 
-    def generate_qr_code(
-        self,
-        *,
-        amount: float,
-        ref_no: str,
-        merchant_name: str,
-        trx_code: str = "BG",
-        size: str = "300",
-    ) -> dict:
-        """Generate a Safaricom Dynamic QR code.
-
-        Returns the raw Daraja response dict containing ``QRCode`` base64 data.
-        Raises ValueError for bad inputs, RuntimeError for gateway errors.
-        """
-        s = self._settings
-        if not s.daraja_shortcode:
-            raise RuntimeError("DARAJA_SHORTCODE must be set.")
-        if amount <= 0:
-            raise ValueError("Amount must be greater than zero.")
-        if not ref_no.strip():
-            raise ValueError("RefNo is required.")
-        if not merchant_name.strip():
-            raise ValueError("MerchantName is required.")
-        if trx_code not in ("BG", "PA", "SM", "SB"):
-            raise ValueError(f"Unsupported TrxCode '{trx_code}'. Use BG, PA, SM, or SB.")
-
-        token = self._auth.get_access_token()
-        cpi = s.daraja_shortcode
-
-        payload = {
-            "MerchantName": merchant_name[:10],
-            "RefNo": ref_no[:20],
-            "Amount": amount,
-            "TrxCode": trx_code,
-            "CPI": cpi,
-            "Size": size,
-        }
-
-        with httpx.Client(timeout=30.0) as client:
-            try:
-                resp = client.post(
-                    s.daraja_qr_url,
-                    headers={
-                        "Authorization": f"Bearer {token}",
-                        "Content-Type": "application/json",
-                    },
-                    json=payload,
-                )
-            except httpx.HTTPError as exc:
-                raise RuntimeError(
-                    f"Daraja QR request failed: {exc}"
-                ) from exc
-
-        try:
-            body = resp.json()
-        except Exception:
-            body = {"errorMessage": resp.text[:300]}
-
-        if resp.status_code != 200:
-            msg = body.get("errorMessage") or body.get("ResponseDescription") or resp.text[:200]
-            raise RuntimeError(f"Daraja QR failed ({resp.status_code}): {msg}")
-
-        qr_code = body.get("QRCode")
-        if not qr_code:
-            raise RuntimeError("Daraja QR response missing QRCode.")
-
-        return body
-
 
 # ---------------------------------------------------------------------------
 # B2B — Business Buy Goods service
@@ -429,6 +361,105 @@ class DarajaB2BService:
         # { "OriginatorConversationID": "...", "ConversationID": "...",
         #   "ResponseCode": "0", "ResponseDescription": "..." }
         # A 200/202 with ResponseCode "0" means ACCEPTED, not completed.
+        if resp.status_code not in (200, 202):
+            msg = (
+                body.get("errorMessage")
+                or body.get("ResponseDescription")
+                or resp.text[:200]
+            )
+            raise RuntimeError(f"Daraja B2B failed ({resp.status_code}): {msg}")
+
+        return body
+
+    def business_pay_goods_request(
+        self,
+        *,
+        amount: float,
+        account_reference: str,
+        party_b: str | None = None,
+        requester: str | None = None,
+        remarks: str = "Cash-Flow B2B",
+    ) -> dict:
+        """Submit a BusinessBuyGoods request to Daraja.
+
+        Returns the raw Daraja response dict containing
+        ``OriginatorConversationID`` and ``ConversationID`` along with
+        ``ResponseCode``/``ResponseDescription``.
+
+        Raises:
+            ValueError: invalid input (amount, reference length, etc.)
+            RuntimeError: Daraja gateway or configuration error.
+        """
+        s = self._settings
+        self._require_configured()
+
+        # Validation
+        try:
+            amount_int = int(amount)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"Amount must be numeric, got {amount!r}") from exc
+        if amount_int < 1:
+            raise ValueError("Amount must be at least KES 1.")
+        if not account_reference or not account_reference.strip():
+            raise ValueError("AccountReference is required.")
+        # Daraja enforces a 13-character limit on AccountReference
+        account_ref_clean = account_reference.strip()[:13]
+        if len(account_ref_clean) < 1:
+            raise ValueError("AccountReference is required.")
+
+        receiver = (party_b or s.daraja_b2b_party_b).strip()
+        if not receiver:
+            raise ValueError("PartyB (receiver shortcode) is required.")
+
+        normalised_requester: str | None = None
+        if requester:
+            try:
+                normalised_requester = normalize_phone(requester)
+            except ValueError as exc:
+                raise ValueError(f"Invalid requester phone: {exc}") from exc
+
+        # Obtain a fresh access token (cached by auth service)
+        token = self._auth.get_access_token()
+
+        # Build the Daraja payload.
+        # Field spelling matches the official Daraja B2B contract.
+        payload: dict = {
+            "Initiator": s.daraja_b2b_initiator,
+            "SecurityCredential": s.daraja_b2b_security_credential,
+            "CommandID": "BusinessBuyGoods",
+            "SenderIdentifierType": "4",
+            "RecieverIdentifierType": "4",
+            "Amount": str(amount_int),
+            "PartyA": s.daraja_b2b_party_a,
+            "PartyB": receiver,
+            "AccountReference": account_ref_clean,
+            "Remarks": (remarks or "Cash-Flow B2B")[:100],
+            "QueueTimeOutURL": s.daraja_b2b_queue_timeout_url,
+            "ResultURL": s.daraja_b2b_result_url,
+        }
+        if normalised_requester:
+            payload["Requester"] = normalised_requester
+
+        with httpx.Client(timeout=30.0) as client:
+            try:
+                resp = client.post(
+                    s.daraja_b2b_url,
+                    headers={
+                        "Authorization": f"Bearer {token}",
+                        "Content-Type": "application/json",
+                    },
+                    json=payload,
+                )
+            except httpx.HTTPError as exc:
+                raise RuntimeError(
+                    f"Daraja B2B request failed: {exc}"
+                ) from exc
+
+        try:
+            body = resp.json()
+        except Exception:
+            body = {"errorMessage": resp.text[:300]}
+
         if resp.status_code not in (200, 202):
             msg = (
                 body.get("errorMessage")
