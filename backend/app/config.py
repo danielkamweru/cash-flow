@@ -50,13 +50,6 @@ class Settings(BaseSettings):
     daraja_callback_url: str = ""
 
     # ------------------------------------------------------------------
-    # Safaricom Daraja M-Pesa Dynamic QR
-    # ------------------------------------------------------------------
-    daraja_qr_url: str = (
-        "https://sandbox.safaricom.co.ke/mpesa/qrcode/v1/generate"
-    )
-
-    # ------------------------------------------------------------------
     # Safaricom Daraja Business Buy Goods (B2B)
     # ------------------------------------------------------------------
     daraja_b2b_url: str = (
