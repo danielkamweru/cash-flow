@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from app.daraja import DarajaAuthService, DarajaSTKService, normalize_phone
+from app.daraja import DarajaAuthService, DarajaB2BService, DarajaSTKService, normalize_phone
 from app.config import Settings
 
 
@@ -57,6 +57,13 @@ def _settings(**kwargs) -> Settings:
         daraja_auth_url="https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials",
         daraja_stk_push_url="https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest",
         daraja_callback_url="https://example.com/api/mpesa/callback",
+        daraja_b2b_url="https://sandbox.safaricom.co.ke/mpesa/b2b/v1/paymentrequest",
+        daraja_b2b_initiator="testapi",
+        daraja_b2b_security_credential="test_credential",
+        daraja_b2b_party_a="600990",
+        daraja_b2b_party_b="600000",
+        daraja_b2b_result_url="https://example.com/api/mpesa/b2b/result",
+        daraja_b2b_queue_timeout_url="https://example.com/api/mpesa/b2b/queue-timeout",
     )
     defaults.update(kwargs)
     return Settings.model_construct(**defaults)
@@ -304,22 +311,24 @@ class TestCallbackParsing:
 
 
 # ---------------------------------------------------------------------------
-# Dynamic QR service
+# B2B — Business Pay Bill / Business Buy Goods
 # ---------------------------------------------------------------------------
 
-class TestDynamicQR:
-    def test_generate_qr_success(self):
+class TestDarajaB2BService:
+    def _make_svc(self, token="mock_token"):
+        mock_auth = MagicMock()
+        mock_auth.get_access_token.return_value = token
+        return DarajaB2BService(settings=_settings(), auth=mock_auth)
+
+    def test_business_pay_bill_success(self):
         mock_resp = MagicMock()
         mock_resp.status_code = 200
         mock_resp.json.return_value = {
-            "ResponseCode": "2001.000.001",
-            "RequestID": "QR-12345",
-            "ResponseDescription": "QR Code Successfully Generated.",
-            "QRCode": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+            "OriginatorConversationID": "B2B-PAY-001",
+            "ConversationID": "CONV-001",
+            "ResponseCode": "0",
+            "ResponseDescription": "Accept the service request successfully.",
         }
-
-        mock_auth = MagicMock()
-        mock_auth.get_access_token.return_value = "mock_token"
 
         with patch("httpx.Client") as mock_client_cls:
             mock_client = MagicMock()
@@ -328,47 +337,81 @@ class TestDynamicQR:
             mock_client.post.return_value = mock_resp
             mock_client_cls.return_value = mock_client
 
-            svc = DarajaSTKService(settings=_settings(), auth=mock_auth)
-            result = svc.generate_qr_code(
+            svc = self._make_svc()
+            result = svc.payment_request(
                 amount=100,
-                ref_no="INV-001",
-                merchant_name="TEST SUPERMARKET",
-                trx_code="BG",
+                account_reference="TEST-001",
+                party_b="600000",
+                requester="254708374149",
             )
 
-        assert result["QRCode"].startswith("iVBORw0KGgo")
-        assert result["RequestID"] == "QR-12345"
+        assert result["ResponseCode"] == "0"
+        assert result["OriginatorConversationID"] == "B2B-PAY-001"
 
-    def test_generate_qr_invalid_trx_code(self):
-        mock_auth = MagicMock()
-        mock_auth.get_access_token.return_value = "mock_token"
-        svc = DarajaSTKService(settings=_settings(), auth=mock_auth)
-        with pytest.raises(ValueError, match="Unsupported TrxCode"):
-            svc.generate_qr_code(
-                amount=100,
-                ref_no="INV-001",
-                merchant_name="TEST",
-                trx_code="XX",
+    def test_business_buy_goods_success(self):
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {
+            "OriginatorConversationID": "B2B-GOODS-001",
+            "ConversationID": "CONV-002",
+            "ResponseCode": "0",
+            "ResponseDescription": "Accept the service request successfully.",
+        }
+
+        with patch("httpx.Client") as mock_client_cls:
+            mock_client = MagicMock()
+            mock_client.__enter__ = MagicMock(return_value=mock_client)
+            mock_client.__exit__ = MagicMock(return_value=False)
+            mock_client.post.return_value = mock_resp
+            mock_client_cls.return_value = mock_client
+
+            svc = self._make_svc()
+            result = svc.business_pay_goods_request(
+                amount=50,
+                account_reference="GOODS-001",
+                party_b="600000",
+                requester="254708374149",
             )
 
-    def test_generate_qr_missing_shortcode(self):
-        mock_auth = MagicMock()
-        mock_auth.get_access_token.return_value = "mock_token"
-        svc = DarajaSTKService(settings=_settings(daraja_shortcode=""), auth=mock_auth)
-        with pytest.raises(RuntimeError, match="DARAJA_SHORTCODE"):
-            svc.generate_qr_code(
+        assert result["ResponseCode"] == "0"
+        assert result["OriginatorConversationID"] == "B2B-GOODS-001"
+
+    def test_business_pay_bill_missing_configured(self):
+        svc = self._make_svc()
+        svc._settings = _settings(
+            daraja_b2b_initiator="",
+            daraja_b2b_security_credential="",
+            daraja_b2b_party_a="",
+            daraja_b2b_party_b="",
+            daraja_b2b_result_url="",
+            daraja_b2b_queue_timeout_url="",
+        )
+        with pytest.raises(RuntimeError, match="not configured"):
+            svc.payment_request(
                 amount=100,
-                ref_no="INV-001",
-                merchant_name="TEST",
+                account_reference="TEST-001",
             )
 
-    def test_generate_qr_daraja_error(self):
+    def test_business_pay_bill_invalid_amount(self):
+        svc = self._make_svc()
+        with pytest.raises(ValueError, match="at least KES 1"):
+            svc.payment_request(
+                amount=0,
+                account_reference="TEST-001",
+            )
+
+    def test_business_pay_bill_missing_reference(self):
+        svc = self._make_svc()
+        with pytest.raises(ValueError, match="AccountReference is required"):
+            svc.payment_request(
+                amount=100,
+                account_reference="",
+            )
+
+    def test_business_pay_bill_daraja_error(self):
         mock_resp = MagicMock()
         mock_resp.status_code = 400
-        mock_resp.json.return_value = {"errorMessage": "Bad Request", "errorCode": "400.002.05"}
-
-        mock_auth = MagicMock()
-        mock_auth.get_access_token.return_value = "mock_token"
+        mock_resp.json.return_value = {"errorMessage": "Bad Request", "errorCode": "400.002.07"}
 
         with patch("httpx.Client") as mock_client_cls:
             mock_client = MagicMock()
@@ -377,37 +420,19 @@ class TestDynamicQR:
             mock_client.post.return_value = mock_resp
             mock_client_cls.return_value = mock_client
 
-            svc = DarajaSTKService(settings=_settings(), auth=mock_auth)
-            with pytest.raises(RuntimeError, match="Daraja QR failed"):
-                svc.generate_qr_code(
+            svc = self._make_svc()
+            with pytest.raises(RuntimeError, match="Daraja B2B failed"):
+                svc.payment_request(
                     amount=100,
-                    ref_no="INV-001",
-                    merchant_name="TEST",
+                    account_reference="TEST-001",
                 )
 
-    def test_generate_qr_missing_qr_code(self):
-        mock_resp = MagicMock()
-        mock_resp.status_code = 200
-        mock_resp.json.return_value = {
-            "ResponseCode": "2001.000.001",
-            "RequestID": "QR-12345",
-            "ResponseDescription": "QR Code Successfully Generated.",
-        }
-
-        mock_auth = MagicMock()
-        mock_auth.get_access_token.return_value = "mock_token"
-
-        with patch("httpx.Client") as mock_client_cls:
-            mock_client = MagicMock()
-            mock_client.__enter__ = MagicMock(return_value=mock_client)
-            mock_client.__exit__ = MagicMock(return_value=False)
-            mock_client.post.return_value = mock_resp
-            mock_client_cls.return_value = mock_client
-
-            svc = DarajaSTKService(settings=_settings(), auth=mock_auth)
-            with pytest.raises(RuntimeError, match="missing QRCode"):
-                svc.generate_qr_code(
+    def test_business_buy_goods_missing_receiver(self):
+        svc = self._make_svc()
+        with patch.object(DarajaB2BService, "_require_configured"):
+            with pytest.raises(ValueError, match="PartyB"):
+                svc.business_pay_goods_request(
                     amount=100,
-                    ref_no="INV-001",
-                    merchant_name="TEST",
+                    account_reference="TEST-001",
+                    party_b="   ",
                 )
