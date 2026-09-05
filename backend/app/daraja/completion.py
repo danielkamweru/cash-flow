@@ -89,35 +89,6 @@ def settle_stk(
     return tx
 
 
-def track_pending_qr(
-    db: Session,
-    *,
-    entity_id: str,
-    account_id: str,
-    amount: float,
-    request_id: str,
-    description: str,
-    provenance: str = "actual",
-) -> models.Transaction:
-    """Record a pending Dynamic QR transaction before the customer scans and pays."""
-    tx = models.Transaction(
-        EntityId=entity_id,
-        AccountId=account_id,
-        Date=_now(),
-        Description=description,
-        Amount=amount,
-        Category="M-Pesa QR",
-        Type="inflow",
-        Provenance=provenance,
-        PaymentReference=request_id,
-        Status="qr_generated",
-    )
-    db.add(tx)
-    db.commit()
-    db.refresh(tx)
-    return tx
-
-
 def record_mpesa_payment(
     db: Session,
     *,
