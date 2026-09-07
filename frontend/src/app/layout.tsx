@@ -48,6 +48,30 @@ const themeInitScript = `
 })();
 `;
 
+const errorGuardScript = `
+(function() {
+  if (typeof window === 'undefined') return;
+  var EXT_ID = 'eppiocemhmnlbhjplcgkofciiegomcon';
+  var EXT_ORIGIN = 'chrome-extension://' + EXT_ID;
+  window.addEventListener('error', function(e) {
+    if (e && e.filename && e.filename.indexOf(EXT_ID) !== -1) {
+      e.stopImmediatePropagation();
+    }
+  }, true);
+  window.addEventListener('unhandledrejection', function(e) {
+    try {
+      var reason = e && e.reason;
+      if (!reason) return;
+      var msg = (reason && reason.message) ? reason.message : String(reason);
+      if (msg.indexOf('M_ID') !== -1 || (reason && reason.stack && reason.stack.indexOf(EXT_ID) !== -1)) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
+    } catch (_) {}
+  });
+})();
+`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
@@ -59,6 +83,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <script dangerouslySetInnerHTML={{ __html: errorGuardScript }} />
       </head>
       <body
         className="min-h-full bg-cf-bg font-sans text-cf-text transition-colors duration-200"
