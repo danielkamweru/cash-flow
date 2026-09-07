@@ -20,8 +20,8 @@ export default function CashFlowPage() {
         subtitle="What is happening with money in and out — foundation for surplus and readiness."
       />
       <div className="grid gap-4 sm:grid-cols-3">
-        <MetricCard label="Latest inflow" value={latest?.inflow ?? 0} badge="Demo" />
-        <MetricCard label="Latest outflow" value={latest?.outflow ?? 0} badge="Demo" />
+        <MetricCard label="Latest inflow" value={latest?.inflow ?? 0} />
+        <MetricCard label="Latest outflow" value={latest?.outflow ?? 0} />
         <MetricCard
           label="Latest net"
           value={formatKes((latest?.inflow ?? 0) - (latest?.outflow ?? 0), { signed: true })}

@@ -15,7 +15,7 @@ export function CashFlowChart({
       <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <h3 className="font-display text-lg font-semibold text-cf-text">Cash flow</h3>
-          <p className="text-xs text-cf-muted">Demo monthly pattern · not a live bank feed</p>
+          <p className="text-xs text-cf-muted">Monthly cash flow · income vs expenses</p>
         </div>
         <div className="flex shrink-0 gap-3 text-[11px] text-cf-muted">
           <span className="flex items-center gap-1.5">
