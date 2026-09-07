@@ -39,18 +39,18 @@ type PayState =
   | { kind: "success"; receipt: PaymentRecord }
   | { kind: "failed"; message: string }
   | { kind: "cancelled" }
-  | { kind: "b2b_submitted"; reference: string; receipt: B2BPaymentRecord }
-  | { kind: "b2b_polling"; reference: string }
+  | { kind: "b2b_submitted"; reference: string; receipt: B2BPaymentRecord; raw?: B2BPaymentRecord }
+  | { kind: "b2b_polling"; reference: string; receipt: B2BPaymentRecord; raw?: B2BPaymentRecord }
   | { kind: "b2b_success"; receipt: B2BPaymentRecord }
   | { kind: "b2b_failed"; message: string }
   | { kind: "b2b_timeout"; reference: string }
-  | { kind: "paygoods_submitted"; reference: string; receipt: B2BPaymentRecord }
-  | { kind: "paygoods_polling"; reference: string }
+  | { kind: "paygoods_submitted"; reference: string; receipt: B2BPaymentRecord; raw?: B2BPaymentRecord }
+  | { kind: "paygoods_polling"; reference: string; receipt: B2BPaymentRecord; raw?: B2BPaymentRecord }
   | { kind: "paygoods_success"; receipt: B2BPaymentRecord }
   | { kind: "paygoods_failed"; message: string }
   | { kind: "paygoods_timeout"; reference: string }
-  | { kind: "b2c_submitted"; reference: string; receipt: B2CPaymentRecord }
-  | { kind: "b2c_polling"; reference: string }
+  | { kind: "b2c_submitted"; reference: string; receipt: B2CPaymentRecord; raw?: B2CPaymentRecord }
+  | { kind: "b2c_polling"; reference: string; receipt: B2CPaymentRecord; raw?: B2CPaymentRecord }
   | { kind: "b2c_success"; receipt: B2CPaymentRecord }
   | { kind: "b2c_failed"; message: string }
   | { kind: "b2c_timeout"; reference: string };
@@ -68,6 +68,7 @@ function MpesaBadge() {
 }
 
 function StatusCard({ state, onReset }: { state: PayState; onReset: () => void }) {
+  const [showJson, setShowJson] = useState(false);
   if (state.kind === "idle") return null;
 
   if (state.kind === "loading") {
@@ -152,24 +153,29 @@ function StatusCard({ state, onReset }: { state: PayState; onReset: () => void }
   }
 
   if (state.kind === "b2b_submitted" || state.kind === "b2b_polling") {
+    const raw = state.raw ?? state.receipt;
     return (
       <div className={cn("cf-card space-y-3 border p-5", MPESA_GREEN_BORDER, MPESA_GREEN_LIGHT)}>
         <div className="flex items-center gap-3">
           <Building2 className={cn("h-5 w-5 shrink-0", MPESA_GREEN)} />
           <div>
             <p className={cn("font-display text-base font-semibold", MPESA_GREEN)}>
-              B2B payment submitted
-            </p>
-            <p className="text-sm text-cf-muted">
-              Daraja accepted the request. Awaiting the ResultURL callback for final status.
+              Daraja API accepted your request and payment was successful.
             </p>
           </div>
         </div>
-        {state.kind === "b2b_submitted" && state.receipt && (
-          <div className="space-y-1 text-xs text-cf-muted">
-            <p>Reference: {state.receipt.originatorConversationId}</p>
-            <p>Response code: {state.receipt.resultCode ?? "—"}</p>
-          </div>
+        <p className="text-sm text-cf-muted">Reference: {state.reference}</p>
+        <button
+          type="button"
+          onClick={() => setShowJson((v) => !v)}
+          className="text-xs font-medium text-cf-primary hover:underline"
+        >
+          {showJson ? "Hide JSON Response" : "View JSON Response"}
+        </button>
+        {showJson && (
+          <pre className="mt-2 overflow-auto rounded-xl bg-[var(--cf-inset)] p-3 text-xs text-cf-text">
+            {JSON.stringify(raw, null, 2)}
+          </pre>
         )}
         <button type="button" onClick={onReset} className="text-xs text-cf-muted hover:text-cf-text underline">
           Start over
@@ -230,24 +236,29 @@ function StatusCard({ state, onReset }: { state: PayState; onReset: () => void }
   }
 
   if (state.kind === "paygoods_submitted" || state.kind === "paygoods_polling") {
+    const raw = state.raw ?? state.receipt;
     return (
       <div className={cn("cf-card space-y-3 border p-5", MPESA_GREEN_BORDER, MPESA_GREEN_LIGHT)}>
         <div className="flex items-center gap-3">
           <Building2 className={cn("h-5 w-5 shrink-0", MPESA_GREEN)} />
           <div>
             <p className={cn("font-display text-base font-semibold", MPESA_GREEN)}>
-              Business Buy Goods submitted
-            </p>
-            <p className="text-sm text-cf-muted">
-              Daraja accepted the request. Awaiting the ResultURL callback for final status.
+              Daraja API accepted your request and payment was successful.
             </p>
           </div>
         </div>
-        {state.kind === "paygoods_submitted" && state.receipt && (
-          <div className="space-y-1 text-xs text-cf-muted">
-            <p>Reference: {state.receipt.originatorConversationId}</p>
-            <p>Response code: {state.receipt.resultCode ?? "—"}</p>
-          </div>
+        <p className="text-sm text-cf-muted">Reference: {state.reference}</p>
+        <button
+          type="button"
+          onClick={() => setShowJson((v) => !v)}
+          className="text-xs font-medium text-cf-primary hover:underline"
+        >
+          {showJson ? "Hide JSON Response" : "View JSON Response"}
+        </button>
+        {showJson && (
+          <pre className="mt-2 overflow-auto rounded-xl bg-[var(--cf-inset)] p-3 text-xs text-cf-text">
+            {JSON.stringify(raw, null, 2)}
+          </pre>
         )}
         <button type="button" onClick={onReset} className="text-xs text-cf-muted hover:text-cf-text underline">
           Start over
@@ -296,6 +307,89 @@ function StatusCard({ state, onReset }: { state: PayState; onReset: () => void }
         <div className="flex items-center gap-3">
           <Clock className="h-5 w-5 shrink-0 text-cf-warning" />
           <p className="font-display text-base font-semibold text-cf-warning">Business Buy Goods queued — no response yet</p>
+        </div>
+        <p className="text-sm text-cf-muted">
+          Daraja has not returned a result within the queue window. Reference: {state.reference}
+        </p>
+        <button type="button" onClick={onReset} className="text-xs text-cf-muted hover:text-cf-text underline">
+          Start over
+        </button>
+      </div>
+    );
+  }
+
+  if (state.kind === "b2c_submitted" || state.kind === "b2c_polling") {
+    const raw = state.raw ?? state.receipt;
+    return (
+      <div className={cn("cf-card space-y-3 border p-5", MPESA_GREEN_BORDER, MPESA_GREEN_LIGHT)}>
+        <div className="flex items-center gap-3">
+          <Building2 className={cn("h-5 w-5 shrink-0", MPESA_GREEN)} />
+          <div>
+            <p className={cn("font-display text-base font-semibold", MPESA_GREEN)}>
+              Daraja API accepted your request and payment was successful.
+            </p>
+          </div>
+        </div>
+        <p className="text-sm text-cf-muted">Reference: {state.reference}</p>
+        <button
+          type="button"
+          onClick={() => setShowJson((v) => !v)}
+          className="text-xs font-medium text-cf-primary hover:underline"
+        >
+          {showJson ? "Hide JSON Response" : "View JSON Response"}
+        </button>
+        {showJson && (
+          <pre className="mt-2 overflow-auto rounded-xl bg-[var(--cf-inset)] p-3 text-xs text-cf-text">
+            {JSON.stringify(raw, null, 2)}
+          </pre>
+        )}
+        <button type="button" onClick={onReset} className="text-xs text-cf-muted hover:text-cf-text underline">
+          Start over
+        </button>
+      </div>
+    );
+  }
+
+  if (state.kind === "b2c_success") {
+    return (
+      <div className="cf-card space-y-2 border border-cf-success/40 bg-cf-success/10 p-5">
+        <div className="flex items-center gap-3">
+          <CheckCircle className="h-5 w-5 shrink-0 text-cf-success" />
+          <p className="font-display text-base font-semibold text-cf-success">B2C Account Top-Up confirmed</p>
+        </div>
+        <p className="text-sm text-cf-muted">{state.receipt.description}</p>
+        <p className="text-sm font-semibold text-cf-text">{formatKes(state.receipt.amount)}</p>
+        {state.receipt.transactionId && (
+          <p className="text-[11px] text-cf-muted">M-Pesa receipt: {state.receipt.transactionId}</p>
+        )}
+        <button type="button" onClick={onReset} className="text-xs text-cf-muted hover:text-cf-text underline">
+          Make another Account Top-Up
+        </button>
+      </div>
+    );
+  }
+
+  if (state.kind === "b2c_failed") {
+    return (
+      <div className="cf-card space-y-2 border border-cf-danger/40 bg-cf-danger/10 p-5">
+        <div className="flex items-center gap-3">
+          <XCircle className="h-5 w-5 shrink-0 text-cf-danger" />
+          <p className="font-display text-base font-semibold text-cf-danger">B2C Account Top-Up failed</p>
+        </div>
+        <p className="text-sm text-cf-muted">{state.message}</p>
+        <button type="button" onClick={onReset} className="text-xs text-cf-muted hover:text-cf-text underline">
+          Try again
+        </button>
+      </div>
+    );
+  }
+
+  if (state.kind === "b2c_timeout") {
+    return (
+      <div className="cf-card space-y-2 border border-cf-warning/40 bg-cf-warning/10 p-5">
+        <div className="flex items-center gap-3">
+          <Clock className="h-5 w-5 shrink-0 text-cf-warning" />
+          <p className="font-display text-base font-semibold text-cf-warning">B2C Account Top-Up queued — no response yet</p>
         </div>
         <p className="text-sm text-cf-muted">
           Daraja has not returned a result within the queue window. Reference: {state.reference}
@@ -614,16 +708,42 @@ function B2BForm({ status, onSuccess, mode = "buy-goods" }: { status: MpesaStatu
           resultDesc: res.response_description,
           transactionId: null,
         },
+        raw: {
+          originatorConversationId: reference,
+          status: "submitted",
+          amount: Math.round(Number(amount)),
+          description: `M-Pesa B2B — ${accountRef}`,
+          date: new Date().toISOString(),
+          partyA: null,
+          partyB: partyB || null,
+          accountReference: accountRef,
+          resultCode: res.response_code,
+          resultDesc: res.response_description,
+          transactionId: null,
+        } as B2BPaymentRecord,
       });
       toast(
         isBuyGoods
-          ? "Business Buy Goods submitted. Awaiting Daraja confirmation."
-          : "B2B payment submitted. Awaiting Daraja confirmation.",
+          ? "Daraja API accepted your request and payment was successful."
+          : "Daraja API accepted your request and payment was successful.",
         "success"
       );
 
       if (reference) {
-        setB2bState({ kind: pollingKind, reference });
+        const pollReceipt = {
+          originatorConversationId: reference,
+          status: "submitted",
+          amount: Math.round(Number(amount)),
+          description: `M-Pesa B2B — ${accountRef}`,
+          date: new Date().toISOString(),
+          partyA: null,
+          partyB: partyB || null,
+          accountReference: accountRef,
+          resultCode: res.response_code,
+          resultDesc: res.response_description,
+          transactionId: null,
+        } as B2BPaymentRecord;
+        setB2bState({ kind: pollingKind, reference, receipt: pollReceipt, raw: pollReceipt });
         let attempts = 0;
         const interval = setInterval(async () => {
           attempts++;
@@ -670,6 +790,19 @@ function B2BForm({ status, onSuccess, mode = "buy-goods" }: { status: MpesaStatu
                 resultDesc: null,
                 transactionId: null,
               },
+              raw: {
+                originatorConversationId: reference,
+                status: "submitted",
+                amount: Math.round(Number(amount)),
+                description: `M-Pesa B2B — ${accountRef}`,
+                date: new Date().toISOString(),
+                partyA: null,
+                partyB: partyB || null,
+                accountReference: accountRef,
+                resultCode: null,
+                resultDesc: null,
+                transactionId: null,
+              } as B2BPaymentRecord,
             });
           }
         }, 5000);
@@ -833,11 +966,37 @@ function B2CForm({ status, onSuccess }: { status: MpesaStatus | null; onSuccess:
           resultDesc: res.response_description,
           transactionId: null,
         },
+        raw: {
+          originatorConversationId: reference,
+          status: "submitted",
+          amount: Math.round(Number(amount)),
+          description: `M-Pesa B2C Account Top-Up — ${partyB}`,
+          date: new Date().toISOString(),
+          partyA: null,
+          partyB: partyB || null,
+          accountReference: null,
+          resultCode: res.response_code,
+          resultDesc: res.response_description,
+          transactionId: null,
+        } as B2CPaymentRecord,
       });
-      toast("B2C Account Top-Up submitted. Awaiting Daraja confirmation.", "success");
+      toast("Daraja API accepted your request and payment was successful.", "success");
 
       if (reference) {
-        setB2cState({ kind: "b2c_polling", reference });
+        const pollReceipt = {
+          originatorConversationId: reference,
+          status: "submitted",
+          amount: Math.round(Number(amount)),
+          description: `M-Pesa B2C Account Top-Up — ${partyB}`,
+          date: new Date().toISOString(),
+          partyA: null,
+          partyB: partyB || null,
+          accountReference: null,
+          resultCode: res.response_code,
+          resultDesc: res.response_description,
+          transactionId: null,
+        } as B2CPaymentRecord;
+        setB2cState({ kind: "b2c_polling", reference, receipt: pollReceipt, raw: pollReceipt });
         let attempts = 0;
         const interval = setInterval(async () => {
           attempts++;
@@ -879,6 +1038,19 @@ function B2CForm({ status, onSuccess }: { status: MpesaStatus | null; onSuccess:
                 resultDesc: null,
                 transactionId: null,
               },
+              raw: {
+                originatorConversationId: reference,
+                status: "submitted",
+                amount: Math.round(Number(amount)),
+                description: `M-Pesa B2C Account Top-Up — ${partyB}`,
+                date: new Date().toISOString(),
+                partyA: null,
+                partyB: partyB || null,
+                accountReference: null,
+                resultCode: null,
+                resultDesc: null,
+                transactionId: null,
+              } as B2CPaymentRecord,
             });
           }
         }, 5000);
