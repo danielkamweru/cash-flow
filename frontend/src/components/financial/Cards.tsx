@@ -17,7 +17,6 @@ export function GoalCard({ goal }: { goal: Goal }) {
           <h3 className="font-display text-base font-semibold text-cf-text sm:text-lg">{goal.name}</h3>
           <p className="text-xs capitalize text-cf-muted">{goal.category.replaceAll("_", " ")}</p>
         </div>
-        <StatusPill status="demo" />
       </div>
       <p className="break-words font-display text-lg font-semibold text-cf-text sm:text-xl">
         <SensitiveValue value={goal.current} />{" "}
