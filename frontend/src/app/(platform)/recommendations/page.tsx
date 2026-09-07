@@ -14,8 +14,8 @@ export default function RecommendationsPage() {
         subtitle="DATA → ANALYSIS → RECOMMENDATION → YOUR DECISION. Never guaranteed returns."
       />
       <div className="rounded-xl border border-cf-border bg-cf-surface px-4 py-3 text-sm text-cf-muted">
-        Recommendations are explainable decision support. Approving an action in demo mode does not
-        move real money.
+        Recommendations are explainable decision support. Approving an action moves real money only
+        when you confirm and the underlying integration is live.
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
         {data.recommendations.map((r) => (
