@@ -22,8 +22,8 @@ export default function NotificationsPage() {
     },
     {
       id: "n3",
-      title: "Demo mode reminder",
-      body: "No live money movement is enabled in this build.",
+      title: "Accounts synced",
+      body: "Your balances and transactions are up to date.",
       at: data.asOf,
     },
   ];
