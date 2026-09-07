@@ -1202,9 +1202,6 @@ export default function PaymentsPage() {
             )}
           </div>
         </div>
-        {status?.note && (
-          <p className="mt-3 text-xs text-cf-muted">{status.note}</p>
-        )}
       </section>
 
       {/* Payment method tabs */}
