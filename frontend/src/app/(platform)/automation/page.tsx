@@ -310,7 +310,7 @@ export default function AutomationPage() {
     <div className="mx-auto max-w-6xl space-y-6">
       <PageHeader
         title="Cash-Flow automation"
-        subtitle="Trigger checks run on a schedule and on every API start. Money-moving rules pause at authorization unless auto-approve is on — simulated execution posts demo ledger entries."
+        subtitle="Trigger checks run on a schedule and on every API start. Money-moving rules pause at authorization unless auto-approve is on — simulated execution posts simulated ledger entries."
         actions={
           <button
             type="button"
