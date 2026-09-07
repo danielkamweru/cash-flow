@@ -105,12 +105,12 @@ export default function SignUpPage() {
                 <input
                   type="text"
                   required
-                  minLength={2}
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full rounded-xl border border-cf-border bg-cf-bg px-10 py-3 text-sm outline-none ring-cf-primary/40 focus:ring-2"
-                  placeholder="Amina Otieno"
-                />
+                   minLength={2}
+                   value={name}
+                   onChange={(e) => setName(e.target.value)}
+                   className="w-full rounded-xl border border-cf-border bg-cf-bg px-10 py-3 text-sm outline-none ring-cf-primary/40 focus:ring-2"
+                   placeholder="Your full name"
+                 />
               </span>
             </label>
 

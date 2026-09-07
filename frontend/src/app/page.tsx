@@ -83,35 +83,35 @@ export default function LandingPage() {
           <div className="relative min-w-0 animate-fade-up-delay-1">
             <div className="cf-card overflow-hidden p-1">
               <div className="rounded-[14px] bg-gradient-to-br from-cf-surface via-cf-surface to-cf-surface-2 p-4 sm:p-6">
-                <p className="text-[11px] uppercase tracking-[0.16em] text-cf-muted">Demo snapshot</p>
-                <p className="mt-2 font-display text-2xl font-semibold sm:text-3xl">KES 30,000</p>
-                <p className="text-sm text-cf-primary">Safe-to-invest surplus</p>
+                <p className="text-[11px] uppercase tracking-[0.16em] text-cf-muted">Live balances</p>
+                <p className="mt-2 font-display text-2xl font-semibold sm:text-3xl">KES 0</p>
+                <p className="text-sm text-cf-primary">Total balance</p>
                 <div className="mt-5 space-y-2 font-mono text-xs text-cf-text-secondary">
                   <div className="flex justify-between gap-3 border-b border-cf-border pb-2">
                     <span className="min-w-0">Liquid money</span>
-                    <span className="shrink-0">85,000</span>
+                    <span className="shrink-0">0</span>
                   </div>
                   <div className="flex justify-between gap-3 border-b border-cf-border pb-2">
                     <span className="min-w-0">Upcoming obligations</span>
-                    <span className="shrink-0">−35,000</span>
+                    <span className="shrink-0">0</span>
                   </div>
                   <div className="flex justify-between gap-3 border-b border-cf-border pb-2">
                     <span className="min-w-0">Emergency buffer</span>
-                    <span className="shrink-0">−20,000</span>
+                    <span className="shrink-0">0</span>
                   </div>
                   <div className="flex justify-between gap-3 pt-1 font-semibold text-cf-text">
                     <span className="min-w-0">Safe surplus</span>
-                    <span className="shrink-0">30,000</span>
+                    <span className="shrink-0">0</span>
                   </div>
                 </div>
                 <p className="mt-4 text-[11px] text-cf-muted">
-                  Transparent calculation · last updated in demo dataset
+                  Sign in to see your actual balances and cash flow.
                 </p>
               </div>
             </div>
             <div className="relative mt-3 rounded-2xl border border-cf-border bg-cf-elevated px-4 py-3 shadow-xl animate-fade-up-delay-2 sm:absolute sm:-bottom-4 sm:-left-2 sm:mt-0 md:-left-4">
               <p className="text-[10px] uppercase tracking-wide text-cf-muted">Wealth Health</p>
-              <p className="font-display text-lg font-semibold text-cf-primary">GROWING</p>
+              <p className="font-display text-lg font-semibold text-cf-primary">—</p>
             </div>
           </div>
         </section>
@@ -148,7 +148,7 @@ export default function LandingPage() {
             {
               icon: Shield,
               title: "Trust as a feature",
-              body: "Demo labels, provenance, last-updated stamps, and no fake money movement. Integrations are honest about status.",
+              body: "Clear provenance, real balances, and honest status for every integration.",
               anim: "animate-fade-up-delay-3",
             },
           ].map((f) => (
@@ -167,8 +167,8 @@ export default function LandingPage() {
                 Built for today. Ready for Kenya&apos;s rails tomorrow.
               </h2>
               <p className="mt-3 text-sm text-cf-muted">
-                Manual accounts and demo market data now. Provider adapters for M-Pesa, banks, MMFs,
-                NSE, and CBK/DhowCSD later — without rewriting the product thesis.
+                Manual accounts now, with live integrations for M-Pesa, banks, MMFs,
+                NSE, and CBK/DhowCSD coming soon — without changing the product you use.
               </p>
               <ul className="mt-5 space-y-2 text-sm text-cf-text-secondary">
                 {[
