@@ -196,7 +196,7 @@ def build_recommendations(bundle: EntityBundle, surplus: dict[str, Any], health:
                     "You retain final approval — no money moves automatically.",
                 ],
                 "actionLabel": "Review allocation plan",
-                "actionState": "demo",
+                "actionState": "ready",
                 "relatedGoalId": primary_goal.Id,
             }
         )
@@ -208,24 +208,24 @@ def build_recommendations(bundle: EntityBundle, surplus: dict[str, Any], health:
             {
                 "id": f"rec-{bundle.entity.Id}-equity",
                 "entityId": bundle.entity.Id,
-                "title": "Consider modest NSE exposure (demo opportunity)",
+                "title": "Consider modest NSE exposure",
                 "summary": "Your portfolio has limited equity exposure relative to a growth-oriented profile.",
                 "why": [
                     "Emergency reserve is protected in the surplus calculation.",
                     f"Risk horizon is {horizon}-term with {tolerance} tolerance.",
                     "Equity share is currently low — diversification may improve long-term growth potential.",
                 ],
-                "opportunity": "Explore demo NSE opportunities that match liquidity and risk filters.",
+                "opportunity": "Explore NSE opportunities that match liquidity and risk filters.",
                 "risk": "elevated",
-                "liquidity": "Typically T+2 on NSE (demo)",
+                "liquidity": "Typically T+2 on NSE",
                 "timeHorizon": "3+ years",
                 "assumptions": [
-                    "Market data shown is labelled demo/sample — not live prices.",
+                    "Market data is illustrative — verify live prices before acting.",
                     "Past or illustrated yields are not guarantees.",
                     "You must approve any future connected trade separately.",
                 ],
                 "actionLabel": "Open investment intelligence",
-                "actionState": "demo",
+                "actionState": "ready",
                 "relatedGoalId": None,
             }
         )
@@ -250,7 +250,7 @@ def build_recommendations(bundle: EntityBundle, surplus: dict[str, Any], health:
                 "timeHorizon": "0–6 months",
                 "assumptions": ["Target months are based on your risk profile settings."],
                 "actionLabel": "View emergency goal",
-                "actionState": "demo",
+                "actionState": "ready",
                 "relatedGoalId": emergency_goal.Id if emergency_goal else None,
             }
         )

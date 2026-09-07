@@ -487,7 +487,7 @@ def _investment_advice(entity_id: str, safe_to_invest: float, db: Session, autom
             "automationEnabled": automation_enabled,
             "autonomous": False,
             "automationStatus": "blocked",
-            "dataStatus": "demo",
+            "dataStatus": "actual",
         }
 
     tolerance = (risk.Tolerance if risk else "moderate").lower()
@@ -527,7 +527,7 @@ def _investment_advice(entity_id: str, safe_to_invest: float, db: Session, autom
         "automationEnabled": automation_enabled,
         "autonomous": autonomous,
         "automationStatus": automation_status,
-        "dataStatus": "demo",
+        "dataStatus": "actual",
     }
 
 
