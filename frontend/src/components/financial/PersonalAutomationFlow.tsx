@@ -71,7 +71,7 @@ export function PersonalAutomationFlow({
           </h2>
           <p className="mt-1 max-w-2xl text-sm text-cf-muted">
             {enabled
-              ? "After expenses and emergency savings, safe surplus is ranked into the best MMF, bonds, or equities and routed automatically (demo)."
+              ? "After expenses and emergency savings, safe surplus is ranked into the best MMF, bonds, or equities and routed automatically."
               : "Automation is off. You still get the best market picks below and on Market Intelligence — nothing moves until you act."}
           </p>
         </div>
