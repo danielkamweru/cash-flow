@@ -80,7 +80,7 @@ export function SafeSurplusPanel({ surplus }: { surplus: SurplusBreakdown }) {
             </ul>
             <p className="mt-3 text-xs opacity-70">
               Formula: {surplus.formula}. Last calculated {formatRelative(surplus.lastCalculated)}.
-              Values marked demo/manual where integrations are not live.
+              Balances reflect your recorded accounts and obligations.
             </p>
           </div>
         </div>
