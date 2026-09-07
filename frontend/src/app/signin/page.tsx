@@ -21,8 +21,8 @@ function SessionExpiredBanner() {
 export default function SignInPage() {
   const router = useRouter();
   const { signIn, user, loading: authLoading } = useAuth();
-  const [email, setEmail] = useState("amina@example.com");
-  const [password, setPassword] = useState("demo1234");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -137,9 +137,6 @@ export default function SignInPage() {
             <Link href="/signup" className="font-medium text-cf-primary hover:underline">
               Create an account
             </Link>
-          </p>
-          <p className="mt-3 text-center text-[11px] text-cf-muted">
-            Demo: amina@example.com / demo1234
           </p>
         </div>
       </main>

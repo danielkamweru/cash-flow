@@ -25,7 +25,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) and sign in with demo credentials: `amina@example.com` / `demo1234`
+Open [http://localhost:3000](http://localhost:3000) and sign in with your account. If you don't have one yet, create an account from the sign-in page.
 
 ## Features
 

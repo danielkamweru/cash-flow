@@ -17,14 +17,6 @@ import type {
 
 export const DEMO_AS_OF = "2026-08-13T17:40:00.000Z";
 
-export const demoUser: User = {
-  id: "user-amina",
-  name: "Amina Otieno",
-  email: "amina@example.com",
-  phone: "+254 712 000 000",
-  location: "Nairobi, Kenya",
-};
-
 export const entities: Entity[] = [
   {
     id: "ent-personal",
