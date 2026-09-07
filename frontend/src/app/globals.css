@@ -1,12 +1,50 @@
 @import "tailwindcss";
 
 :root,
+:root[data-theme="light"] {
+  --cf-primary: #00A651;
+  --cf-primary-hover: #008c44;
+  --cf-primary-deep: #007A3D;
+  --cf-primary-light: #E8F7EF;
+  --cf-secondary: #6B7280;
+  --cf-accent: #00A651;
+
+  --cf-background: #FFFFFF;
+  --cf-background-elevated: #F8FAF9;
+  --cf-surface: #FFFFFF;
+  --cf-surface-2: #F3F6F4;
+  --cf-border: rgba(0, 0, 0, 0.08);
+  --cf-border-strong: rgba(0, 0, 0, 0.14);
+
+  --cf-text: #111827;
+  --cf-text-secondary: #374151;
+  --cf-muted: #6B7280;
+
+  --cf-success: #1f8a5b;
+  --cf-warning: #b8860b;
+  --cf-danger: #c53a3a;
+  --cf-info: #2f6f95;
+
+  --cf-radius: 16px;
+  --cf-radius-sm: 10px;
+  --cf-shadow: 0 14px 40px rgba(0, 0, 0, 0.06);
+  --cf-overlay: rgba(0, 0, 0, 0.45);
+  --cf-grid-line: rgba(0, 0, 0, 0.04);
+  --cf-inset: rgba(0, 0, 0, 0.03);
+  --cf-contrast-surface: #171a21;
+  --cf-contrast-text: #f5f3ef;
+  --cf-scrollbar: rgba(0, 0, 0, 0.18);
+
+  --background: var(--cf-background);
+  --foreground: var(--cf-text);
+}
+
 :root[data-theme="dark"] {
   --cf-primary: #00A651;
   --cf-primary-hover: #008c44;
   --cf-primary-deep: #007A3D;
   --cf-primary-light: #E8F7EF;
-  --cf-secondary: #1F2937;
+  --cf-secondary: #F3F4F6;
   --cf-accent: #00A651;
 
   --cf-background: #0c0d10;
@@ -25,8 +63,6 @@
   --cf-danger: #d64545;
   --cf-info: #3d7ea6;
 
-  --cf-radius: 16px;
-  --cf-radius-sm: 10px;
   --cf-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
   --cf-overlay: rgba(0, 0, 0, 0.6);
   --cf-grid-line: rgba(255, 255, 255, 0.03);
@@ -34,42 +70,6 @@
   --cf-contrast-surface: #f7f4ef;
   --cf-contrast-text: #16141a;
   --cf-scrollbar: rgba(255, 255, 255, 0.12);
-
-  --background: var(--cf-background);
-  --foreground: var(--cf-text);
-}
-
-:root[data-theme="light"] {
-  --cf-primary: #00A651;
-  --cf-primary-hover: #008c44;
-  --cf-primary-deep: #007A3D;
-  --cf-primary-light: #E8F7EF;
-  --cf-secondary: #6B7280;
-  --cf-accent: #00A651;
-
-  --cf-background: #F8FAF9;
-  --cf-background-elevated: #ffffff;
-  --cf-surface: #ffffff;
-  --cf-surface-2: #f3f6f4;
-  --cf-border: rgba(0, 0, 0, 0.08);
-  --cf-border-strong: rgba(0, 0, 0, 0.14);
-
-  --cf-text: #1F2937;
-  --cf-text-secondary: #4b5563;
-  --cf-muted: #6B7280;
-
-  --cf-success: #1f8a5b;
-  --cf-warning: #b8860b;
-  --cf-danger: #c53a3a;
-  --cf-info: #2f6f95;
-
-  --cf-shadow: 0 14px 40px rgba(0, 0, 0, 0.06);
-  --cf-overlay: rgba(0, 0, 0, 0.45);
-  --cf-grid-line: rgba(0, 0, 0, 0.04);
-  --cf-inset: rgba(0, 0, 0, 0.03);
-  --cf-contrast-surface: #171a21;
-  --cf-contrast-text: #f5f3ef;
-  --cf-scrollbar: rgba(0, 0, 0, 0.18);
 
   --background: var(--cf-background);
   --foreground: var(--cf-text);
