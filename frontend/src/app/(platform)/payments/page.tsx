@@ -529,16 +529,6 @@ function STKPushForm({ status, onSuccess }: { status: MpesaStatus | null; onSucc
             <MpesaBadge />
           </div>
 
-          {!configured && (
-            <div className="rounded-xl border border-cf-warning/40 bg-cf-warning/10 px-4 py-3 text-sm text-cf-text-secondary">
-              <p className="font-medium text-cf-text">Daraja credentials not configured</p>
-              <p className="mt-1 text-xs text-cf-muted">
-                Add <code>DARAJA_CONSUMER_KEY</code>, <code>DARAJA_CONSUMER_SECRET</code>,{" "}
-                <code>DARAJA_SHORTCODE</code>, and <code>DARAJA_PASSKEY</code> to{" "}
-                <code>backend/.env</code>, then restart the API.
-              </p>
-            </div>
-          )}
 
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block space-y-1.5 text-sm">
@@ -837,17 +827,6 @@ function B2BForm({ status, onSuccess, mode = "buy-goods" }: { status: MpesaStatu
             <MpesaBadge />
           </div>
 
-          {!configured && (
-            <div className="rounded-xl border border-cf-warning/40 bg-cf-warning/10 px-4 py-3 text-sm text-cf-text-secondary">
-              <p className="font-medium text-cf-text">Daraja B2B not configured</p>
-              <p className="mt-1 text-xs text-cf-muted">
-                Add <code>DARAJA_B2B_INITIATOR</code>, <code>DARAJA_B2B_SECURITY_CREDENTIAL</code>,{" "}
-                <code>DARAJA_B2B_PARTY_A</code>, <code>DARAJA_B2B_PARTY_B</code>,{" "}
-                <code>DARAJA_B2B_RESULT_URL</code> and <code>DARAJA_B2B_QUEUE_TIMEOUT_URL</code>{" "}
-                to <code>backend/.env</code>, then restart the API.
-              </p>
-            </div>
-          )}
 
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block space-y-1.5 text-sm">
@@ -1083,16 +1062,6 @@ function B2CForm({ status, onSuccess }: { status: MpesaStatus | null; onSuccess:
             <MpesaBadge />
           </div>
 
-          {!configured && (
-            <div className="rounded-xl border border-cf-warning/40 bg-cf-warning/10 px-4 py-3 text-sm text-cf-text-secondary">
-              <p className="font-medium text-cf-text">Daraja B2C not configured</p>
-              <p className="mt-1 text-xs text-cf-muted">
-                Add <code>DARAJA_B2B_INITIATOR</code>, <code>DARAJA_B2B_SECURITY_CREDENTIAL</code>,{" "}
-                <code>DARAJA_B2B_PARTY_A</code>, <code>DARAJA_B2B_RESULT_URL</code> and <code>DARAJA_B2B_QUEUE_TIMEOUT_URL</code>{" "}
-                to <code>backend/.env</code>, then restart the API.
-              </p>
-            </div>
-          )}
 
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block space-y-1.5 text-sm">
