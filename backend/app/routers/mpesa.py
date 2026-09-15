@@ -108,14 +108,17 @@ def stk_push(
 ):
     """Initiate an M-Pesa STK Push.
 
-    1. Accepts any phone number format (no validation).
+    1. Normalizes phone number to Daraja format (2547XXXXXXXX for Kenya).
     2. Obtains a Daraja access token (cached).
     3. Sends the STK Push request to Safaricom.
     4. Records a pending transaction in the ledger (if entity_id + account_id provided).
     5. Returns checkout_request_id for status polling.
     """
-    # Note: Phone validation removed to allow any international number format
-    # Daraja API will handle invalid numbers and return appropriate errors
+    # Normalize phone number to Daraja format
+    try:
+        phone = normalize_phone(body.phone_number)
+    except ValueError as exc:
+        return JSONResponse(status_code=422, content={"success": False, "message": str(exc)})
 
     s = get_settings()
     if not s.daraja_configured:
@@ -133,7 +136,7 @@ def stk_push(
 
     try:
         result = get_stk_service().initiate(
-            phone_number=body.phone_number,
+            phone_number=phone,
             amount=body.amount,
             account_reference=body.account_reference,
             transaction_desc=body.transaction_description,

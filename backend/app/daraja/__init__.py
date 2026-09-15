@@ -33,24 +33,38 @@ from app.config import Settings, get_settings
 # ---------------------------------------------------------------------------
 
 def normalize_phone(raw: str) -> str:
-    """Normalise common Kenyan formats to 2547XXXXXXXX required by Daraja.
+    """Normalise phone number to Daraja format (2547XXXXXXXX).
 
-    Accepts:
+    Accepts Kenyan formats:
         07XXXXXXXX   → 2547XXXXXXXX
         2547XXXXXXXX → 2547XXXXXXXX
         +2547XXXXXXXX → 2547XXXXXXXX
-    Raises ValueError for anything that doesn't match.
+    
+    For international numbers, keeps the format but ensures it starts with country code.
+    Note: Daraja M-Pesa primarily works with Kenyan numbers.
     """
     phone = re.sub(r"[\s\-()]", "", raw or "")
     if phone.startswith("+"):
         phone = phone[1:]
+    
+    # Handle Kenyan formats
     if phone.startswith("07") and len(phone) == 10:
         phone = "254" + phone[1:]
-    if re.fullmatch(r"2547\d{8}", phone):
+    elif phone.startswith("01") and len(phone) == 10:
+        phone = "254" + phone[1:]
+    elif re.fullmatch(r"2547\d{8}", phone):
         return phone
+    elif re.fullmatch(r"2541\d{8}", phone):
+        return phone
+    
+    # For international numbers, return as-is (Daraja may reject non-Kenyan numbers)
+    if len(phone) >= 10 and phone.isdigit():
+        return phone
+    
     raise ValueError(
-        f"Invalid Kenyan phone number '{raw}'. "
-        "Use 07XXXXXXXX, 2547XXXXXXXX, or +2547XXXXXXXX."
+        f"Invalid phone number '{raw}'. "
+        "For Kenya: use 07XXXXXXXX, 2547XXXXXXXX, or +2547XXXXXXXX. "
+        "International numbers may not work with M-Pesa."
     )
 
 
@@ -172,8 +186,9 @@ class DarajaSTKService:
         if amount < 1:
             raise ValueError("Amount must be at least KES 1.")
 
-        # Note: Phone normalization removed to allow any international number format
-        phone = phone_number
+        # Normalize phone number to Daraja format (2547XXXXXXXX)
+        # Accepts: 07XXXXXXXX, 2547XXXXXXXX, +2547XXXXXXXX, +2541XXXXXXXX (international)
+        phone = normalize_phone(phone_number)
         token = self._auth.get_access_token()
         ts = self._timestamp()
         password = self._password(ts)
