@@ -172,7 +172,8 @@ class DarajaSTKService:
         if amount < 1:
             raise ValueError("Amount must be at least KES 1.")
 
-        phone = normalize_phone(phone_number)
+        # Note: Phone normalization removed to allow any international number format
+        phone = phone_number
         token = self._auth.get_access_token()
         ts = self._timestamp()
         password = self._password(ts)

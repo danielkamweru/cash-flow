@@ -44,7 +44,7 @@ router = APIRouter(prefix="/api/mpesa", tags=["mpesa"])
 # ---------------------------------------------------------------------------
 
 class STKPushRequest(BaseModel):
-    phone_number: str = Field(..., description="Kenyan phone: 07XX, 2547XX, or +2547XX")
+    phone_number: str = Field(..., description="Phone number (any format accepted)")
     amount: float = Field(..., gt=0, description="Amount in KES")
     account_reference: str = Field(default="CASHFLOW", max_length=12)
     transaction_description: str = Field(default="Cash-Flow payment", max_length=100)
@@ -108,17 +108,14 @@ def stk_push(
 ):
     """Initiate an M-Pesa STK Push.
 
-    1. Validates and normalises the phone number.
+    1. Accepts any phone number format (no validation).
     2. Obtains a Daraja access token (cached).
     3. Sends the STK Push request to Safaricom.
     4. Records a pending transaction in the ledger (if entity_id + account_id provided).
     5. Returns checkout_request_id for status polling.
     """
-    # Validate phone before hitting Daraja
-    try:
-        normalize_phone(body.phone_number)
-    except ValueError as exc:
-        return JSONResponse(status_code=422, content={"success": False, "message": str(exc)})
+    # Note: Phone validation removed to allow any international number format
+    # Daraja API will handle invalid numbers and return appropriate errors
 
     s = get_settings()
     if not s.daraja_configured:

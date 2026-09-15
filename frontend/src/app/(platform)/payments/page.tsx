@@ -539,7 +539,7 @@ function STKPushForm({ status, onSuccess }: { status: MpesaStatus | null; onSucc
                 type="tel"
                 inputMode="tel"
                 required
-                placeholder="07XXXXXXXX"
+                placeholder="Enter phone number"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 className={field}
