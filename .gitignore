@@ -60,6 +60,7 @@ next-env.d.ts
 
 # python
 .venv/
+backend/venv/
 __pycache__/
 *.py[cod]
 .pytest_cache/

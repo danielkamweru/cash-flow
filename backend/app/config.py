@@ -50,6 +50,15 @@ class Settings(BaseSettings):
     daraja_callback_url: str = ""
 
     # ------------------------------------------------------------------
+    # Sandbox reversal (simulated money)
+    # ------------------------------------------------------------------
+    # In sandbox mode STK Push payments are simulated — there is no real
+    # money storage. When > 0, every successfully settled STK inflow is
+    # automatically reversed after this many seconds so the ledger stays
+    # honest. Set to 0 to disable (production behaviour).
+    daraja_simulated_reversal_seconds: int = 5
+
+    # ------------------------------------------------------------------
     # Safaricom Daraja Business Buy Goods (B2B)
     # ------------------------------------------------------------------
     daraja_b2b_url: str = (
@@ -103,6 +112,11 @@ class Settings(BaseSettings):
             and self.daraja_b2b_party_a.strip()
             and self.daraja_b2b_party_b.strip()
         )
+
+    @property
+    def is_sandbox(self) -> bool:
+        """True when configured against the Safaricom Daraja sandbox."""
+        return "sandbox" in self.daraja_auth_url
 
 
 @lru_cache

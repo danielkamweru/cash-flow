@@ -6,11 +6,17 @@ in a provider-agnostic way.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+import logging
+import threading
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
 from app import models
+from app.config import get_settings
+from app.db import SessionLocal
+
+logger = logging.getLogger("cash-flow.mpesa")
 
 
 def _now() -> datetime:
@@ -84,9 +90,165 @@ def settle_stk(
         if mpesa_receipt:
             tx.Description = f"{tx.Description} · {mpesa_receipt}"
 
+        # In sandbox mode there is no real money storage, so every successfully
+        # settled STK Push inflow is reversed after a short delay.  The timer
+        # worker opens its own DB session so this request is not blocked.
+        schedule_reversal(
+            entity_id=tx.EntityId,
+            account_id=tx.AccountId,
+            checkout_request_id=tx.PaymentReference,
+        )
+
     db.commit()
     db.refresh(tx)
     return tx
+
+
+# ---------------------------------------------------------------------------
+# Sandbox reversal — STK Push payments are simulated and auto-reversed
+# after a short delay because there is no real money storage.
+# ---------------------------------------------------------------------------
+
+REVERSAL_DELAY_SECONDS: float = 5.0
+
+
+def reverse_stk(
+    db: Session,
+    *,
+    entity_id: str | None = None,
+    account_id: str | None = None,
+    checkout_request_id: str | None = None,
+) -> list[models.Transaction]:
+    """Reverse completed STK Push inflow transactions.
+
+    In sandbox mode STK Push payments are simulated — there is no real
+    money storage. This undoes the account-balance credit granted when the
+    transaction was settled, marking each transaction ``"reversed"``.
+
+    When reversing multiple transactions the **largest amounts are reversed
+    first** so that bigger flows settle before smaller ones, as is customary
+    for reconciliation.
+
+    Args:
+        db: Database session (committed and refreshed by this call).
+        entity_id: Optional entity filter. When omitted, all matching
+            transactions for the given account / checkout id are reversed.
+        account_id: Optional account filter.
+        checkout_request_id: If given, reverse only this single transaction.
+
+    Returns:
+        The list of transactions that were actually reversed (oldest
+        settlement is kept; already-reversed rows are skipped).
+    """
+
+    query = (
+        db.query(models.Transaction)
+        .filter(
+            models.Transaction.Type == "inflow",
+            models.Transaction.Category == "M-Pesa",
+            models.Transaction.Status == "completed",
+        )
+        .order_by(models.Transaction.Amount.desc())
+    )
+
+    if entity_id is not None:
+        query = query.filter(models.Transaction.EntityId == entity_id)
+    if account_id is not None:
+        query = query.filter(models.Transaction.AccountId == account_id)
+    if checkout_request_id is not None:
+        query = query.filter(models.Transaction.PaymentReference == checkout_request_id)
+
+    txs = query.all()
+    reversed_txs: list[models.Transaction] = []
+
+    for tx in txs:
+        # Defensive: the query filters by Status == "completed", but guard
+        # again so a caller passing a wider query cannot double-reverse.
+        if tx.Status != "completed":
+            continue
+        tx.Status = "reversed"
+        account = db.get(models.Account, tx.AccountId)
+        if account is not None:
+            account.Balance -= tx.Amount
+            account.LastUpdated = _now()
+        tx.Description = f"{tx.Description} · reversed (simulated)"
+        tx.Metadata = {
+            **(tx.Metadata or {}),
+            "reversed_at": _now().isoformat(),
+            "reversal_reason": "sandbox_simulated_no_storage",
+        }
+        reversed_txs.append(tx)
+
+    if reversed_txs:
+        db.commit()
+        for tx in reversed_txs:
+            db.refresh(tx)
+
+    return reversed_txs
+
+
+def _reversal_worker(
+    entity_id: str | None,
+    account_id: str | None,
+    checkout_request_id: str | None,
+) -> None:
+    """Background worker that performs the delayed reversal.
+
+    Opens a fresh DB session so the request that triggered the settlement
+    is never blocked by the delay.
+    """
+
+    db = SessionLocal()
+    try:
+        reversed_txs = reverse_stk(
+            db,
+            entity_id=entity_id,
+            account_id=account_id,
+            checkout_request_id=checkout_request_id,
+        )
+        if reversed_txs:
+            logger.info(
+                "Reversed %d simulated STK payment(s) for entity %s "
+                "(largest-first: %s)",
+                len(reversed_txs),
+                entity_id,
+                [round(t.Amount, 2) for t in reversed_txs],
+            )
+    except Exception:  # noqa: BLE001
+        logger.exception("Failed to reverse simulated STK payments")
+        db.rollback()
+    finally:
+        db.close()
+
+
+def schedule_reversal(
+    *,
+    entity_id: str | None = None,
+    account_id: str | None = None,
+    checkout_request_id: str | None = None,
+    delay: float | None = None,
+) -> threading.Timer | None:
+    """Schedule a delayed reversal of completed STK payments.
+
+    Returns the ``threading.Timer`` handle, or ``None`` when reversal is
+    disabled (non-sandbox or ``daraja_simulated_reversal_seconds == 0``).
+    """
+
+    settings = get_settings()
+    if not settings.is_sandbox:
+        return None
+    wait = delay if delay is not None else float(settings.daraja_simulated_reversal_seconds)
+    if wait <= 0:
+        return None
+
+    timer = threading.Timer(
+        wait,
+        _reversal_worker,
+        args=(entity_id, account_id, checkout_request_id),
+    )
+    timer.daemon = True
+    timer.start()
+    return timer
 
 
 def record_mpesa_payment(
