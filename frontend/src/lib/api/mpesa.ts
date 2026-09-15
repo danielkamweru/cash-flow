@@ -30,7 +30,7 @@ export type STKPushResponse = {
 
 export type PaymentRecord = {
   checkoutRequestId: string;
-  status: "pending" | "completed" | "failed";
+  status: "pending" | "completed" | "failed" | "reversed";
   amount: number;
   description: string;
   date: string;

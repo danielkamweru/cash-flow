@@ -20,7 +20,7 @@ import {
 import { useEntity, useEntityData } from "@/lib/context/EntityContext";
 import { cn, formatKes } from "@/lib/format";
 import { friendlyError } from "@/lib/friendlyError";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CheckCircle, XCircle, Clock, Smartphone, ExternalLink, Building2 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -37,6 +37,7 @@ type PayState =
   | { kind: "stk_sent"; checkoutRequestId: string; merchantRequestId: string | null }
   | { kind: "polling"; checkoutRequestId: string }
   | { kind: "success"; receipt: PaymentRecord }
+  | { kind: "reversed"; receipt: PaymentRecord }
   | { kind: "failed"; message: string }
   | { kind: "cancelled" }
   | { kind: "b2b_submitted"; reference: string; receipt: B2BPaymentRecord; raw?: B2BPaymentRecord }
@@ -110,21 +111,42 @@ function StatusCard({ state, onReset }: { state: PayState; onReset: () => void }
     );
   }
 
-  if (state.kind === "success") {
-    return (
-      <div className="cf-card space-y-2 border border-cf-success/40 bg-cf-success/10 p-5">
-        <div className="flex items-center gap-3">
-          <CheckCircle className="h-5 w-5 shrink-0 text-cf-success" />
-          <p className="font-display text-base font-semibold text-cf-success">Payment successful</p>
-        </div>
-        <p className="text-sm text-cf-muted">{state.receipt.description}</p>
-        <p className="text-sm font-semibold text-cf-text">{formatKes(state.receipt.amount)}</p>
-        <button type="button" onClick={onReset} className="text-xs text-cf-muted hover:text-cf-text underline">
-          Make another payment
-        </button>
-      </div>
-    );
-  }
+   if (state.kind === "success") {
+     return (
+       <div className="cf-card space-y-2 border border-cf-success/40 bg-cf-success/10 p-5">
+         <div className="flex items-center gap-3">
+           <CheckCircle className="h-5 w-5 shrink-0 text-cf-success" />
+           <p className="font-display text-base font-semibold text-cf-success">Payment successful</p>
+         </div>
+         <p className="text-sm text-cf-muted">{state.receipt.description}</p>
+         <p className="text-sm font-semibold text-cf-text">{formatKes(state.receipt.amount)}</p>
+         <button type="button" onClick={onReset} className="text-xs text-cf-muted hover:text-cf-text underline">
+           Make another payment
+         </button>
+       </div>
+     );
+   }
+
+   if (state.kind === "reversed") {
+     return (
+       <div className="cf-card space-y-2 border border-cf-warning/40 bg-cf-warning/10 p-5">
+         <div className="flex items-center gap-3">
+           <Clock className="h-5 w-5 shrink-0 text-cf-warning" />
+           <p className="font-display text-base font-semibold text-cf-warning">Payment reversed</p>
+         </div>
+         <p className="text-sm text-cf-muted">
+           {state.receipt.description}
+         </p>
+         <p className="text-sm text-cf-muted">
+           Sandbox mode — funds returned after a short delay (no real money storage).
+         </p>
+         <p className="text-sm font-semibold text-cf-text">{formatKes(state.receipt.amount)} returned</p>
+         <button type="button" onClick={onReset} className="text-xs text-cf-muted hover:text-cf-text underline">
+           Make another payment
+         </button>
+       </div>
+     );
+   }
 
   if (state.kind === "failed") {
     return (
@@ -414,9 +436,10 @@ function STKPushForm({ status, onSuccess }: { status: MpesaStatus | null; onSucc
   const [reference, setReference] = useState("CASHFLOW");
   const [description, setDescription] = useState("Cash-Flow payment");
   const [accountId, setAccountId] = useState(snapshot.accounts[0]?.id ?? "");
-  const [payState, setPayState] = useState<PayState>({ kind: "idle" });
-  const [confirming, setConfirming] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+   const [payState, setPayState] = useState<PayState>({ kind: "idle" });
+   const [confirming, setConfirming] = useState(false);
+   const [error, setError] = useState<string | null>(null);
+   const activeCheckoutRef = useRef<string | null>(null);
 
   const configured = status?.configured ?? false;
   const field = "w-full rounded-xl border border-cf-border bg-cf-surface-2 px-3 py-3 text-sm text-cf-text outline-none focus:border-cf-primary/50 sm:py-2.5";
@@ -457,40 +480,64 @@ function STKPushForm({ status, onSuccess }: { status: MpesaStatus | null; onSucc
         return;
       }
 
-      const checkoutRequestId = res.checkoutRequestId ?? "";
-      setPayState({
-        kind: "stk_sent",
-        checkoutRequestId,
-        merchantRequestId: res.merchantRequestId,
-      });
-      toast("M-Pesa prompt sent. Check your phone.", "success");
+       const checkoutRequestId = res.checkoutRequestId ?? "";
+       activeCheckoutRef.current = checkoutRequestId;
+       setPayState({
+         kind: "stk_sent",
+         checkoutRequestId,
+         merchantRequestId: res.merchantRequestId,
+       });
+       toast("M-Pesa prompt sent. Check your phone.", "success");
 
-      // Poll for up to 60 s (every 5 s) to detect callback settlement
-      if (checkoutRequestId) {
-        setPayState({ kind: "polling", checkoutRequestId });
-        let attempts = 0;
-        const interval = setInterval(async () => {
-          attempts++;
-          try {
-            const payment = await fetchPayment(checkoutRequestId);
-            if (payment.status === "completed") {
-              clearInterval(interval);
-              setPayState({ kind: "success", receipt: payment });
-              onSuccess(payment);
-              toast("Payment confirmed!", "success");
-            } else if (payment.status === "failed") {
-              clearInterval(interval);
-              setPayState({ kind: "failed", message: "Payment was not completed." });
-            }
-          } catch {
-            // Payment not found yet — keep polling
-          }
-          if (attempts >= 12) {
-            clearInterval(interval);
-            // Leave in stk_sent state — user can check manually
-            setPayState({ kind: "stk_sent", checkoutRequestId, merchantRequestId: res.merchantRequestId });
-          }
-        }, 5000);
+       // Poll for up to 60 s (every 5 s) to detect callback settlement
+       if (checkoutRequestId) {
+         setPayState({ kind: "polling", checkoutRequestId });
+         let attempts = 0;
+         const interval = setInterval(async () => {
+           attempts++;
+           try {
+             const payment = await fetchPayment(checkoutRequestId);
+             if (payment.status === "reversed" && activeCheckoutRef.current === checkoutRequestId) {
+               clearInterval(interval);
+               setPayState({ kind: "reversed", receipt: payment });
+               toast("Payment reversed — funds returned (sandbox).", "info");
+             } else if (payment.status === "completed") {
+               clearInterval(interval);
+               setPayState({ kind: "success", receipt: payment });
+               onSuccess(payment);
+               toast("Payment confirmed!", "success");
+
+               // In sandbox mode payments are reversed after 5 seconds because
+               // there is no real money storage. Re-check the status after the
+               // delay to surface the reversal to the user.
+               window.setTimeout(async () => {
+                 try {
+                   const updated = await fetchPayment(checkoutRequestId);
+                   if (
+                     updated.status === "reversed" &&
+                     activeCheckoutRef.current === checkoutRequestId
+                   ) {
+                     setPayState((prev) =>
+                       prev.kind === "success" ? { kind: "reversed", receipt: updated } : prev,
+                     );
+                   }
+                 } catch {
+                   /* ignore — payment may not be found or network error */
+                 }
+               }, 5000);
+             } else if (payment.status === "failed") {
+               clearInterval(interval);
+               setPayState({ kind: "failed", message: "Payment was not completed." });
+             }
+           } catch {
+             // Payment not found yet — keep polling
+           }
+           if (attempts >= 12) {
+             clearInterval(interval);
+             // Leave in stk_sent state — user can check manually
+             setPayState({ kind: "stk_sent", checkoutRequestId, merchantRequestId: res.merchantRequestId });
+           }
+         }, 5000);
       }
     } catch (err) {
       const msg = friendlyError(err, "Could not initiate M-Pesa payment. Please try again.");
@@ -520,7 +567,7 @@ function STKPushForm({ status, onSuccess }: { status: MpesaStatus | null; onSucc
         </p>
       </ConfirmModal>
 
-      <StatusCard state={payState} onReset={() => { setPayState({ kind: "idle" }); setError(null); }} />
+       <StatusCard state={payState} onReset={() => { activeCheckoutRef.current = null; setPayState({ kind: "idle" }); setError(null); }} />
 
       {(payState.kind === "idle" || payState.kind === "failed" || payState.kind === "cancelled") && (
         <form onSubmit={handleSubmit} className="cf-card space-y-4 p-5">
